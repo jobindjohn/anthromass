@@ -26,6 +26,6 @@ def make_train_test(data, test_size:float):
     train, test = train_test_split(data, test_size=test_size, shuffle=True, random_state=42)
     return train, test
 
-# %% ../nbs/100_data.ipynb 10
+# %% ../nbs/100_data.ipynb 11
 def testaren():
     pass
