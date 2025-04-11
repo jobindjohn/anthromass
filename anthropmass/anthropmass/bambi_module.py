@@ -7,6 +7,7 @@ __all__ = ['setpriors_com', 'component_model']
 import pandas as pd
 import bambi as bmb
 import arviz as az
+import numpy as np
 from .anthro_module import *
 
 # %% ../nbs/230_anthro_bambi.ipynb 7

@@ -6,11 +6,10 @@ __all__ = ['plot_body']
 # %% ../../nbs/640_mass_plot_body.ipynb 2
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, Polygon
-
-# %% ../../nbs/640_mass_plot_body.ipynb 3
 from .measurements_heights_module import *
 from .com_calculation_module import *
 
+# %% ../../nbs/640_mass_plot_body.ipynb 3
 def plot_body(Ansur):
     """
     Draws a front-view plot of the body segments with COM points.

@@ -48,7 +48,7 @@ def add_to_df(df, measurement, pred):
 
 # %% ../nbs/200_anthropometry.ipynb 12
 def make_csv(data, name):
-    data.to_csv(f'{name}.csv')
+    data.to_csv(f'{name}.csv', index=False)
 
 # %% ../nbs/200_anthropometry.ipynb 14
 def make_predictions(kindofmodel:str, measurements:list, w, h, g):
