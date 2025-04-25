@@ -12,5 +12,5 @@ from .anthro_module import *
 def make_model(measurement, data, formula:str):
     variables = f"{measurement} ~ " + formula
     made_model = bmb.Model(variables,data=data)
-    made_fitted = made_model.fit(tune=2000, draws=2000, init="adapt_diag", progressbar=True)
+    made_fitted = made_model.fit(tune=2000, draws=2000, chains = 4, cores= 1, init="adapt_diag", progressbar=True)
     return made_model, made_fitted
