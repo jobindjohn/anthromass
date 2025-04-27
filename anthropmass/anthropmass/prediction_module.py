@@ -33,6 +33,11 @@ def predict_from_model(kindofmodel:str, measurement:str, w, h, g):
     elif kindofmodel=='bambi':
         model = model_bmb(measurement)
         return predict_mean_bmb(pickledmodel, model, person, measurement)
+    elif kindofmodel=='bambi_new':
+        #train=pd.read_csv('../data/processed/ANSURIInormalizedtrain.csv')
+        model = component_model(measurement,train)
+        person['Component']='Army Reserve' #'Regular Army'#'Army National Guard'#'Army Reserve'
+        return predict_mean_bmb(pickledmodel, model, person, measurement)
     elif kindofmodel=='bambi_ml_gc':
         train=pd.read_csv('../data/processed/ANSURIInormalizedtrain.csv')
         model = component_model(measurement,train)
