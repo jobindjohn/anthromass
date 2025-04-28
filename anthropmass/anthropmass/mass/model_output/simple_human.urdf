@@ -259,19 +259,19 @@
   <joint name="torso_bottom_to_mid" type="fixed">
     <parent link="torso_bottom"/>
     <child  link="torso_mid"/>
-    <origin xyz="0 0 0.14929187297821045" rpy="0 0 0"/>
+    <origin xyz="0 0 0.16574005782604218" rpy="0 0 0"/>
     <axis  xyz="0 0 0"/>
   </joint>
   <joint name="torso_mid_to_top" type="fixed">
     <parent link="torso_mid"/>
     <child  link="torso_top"/>
-    <origin xyz="0 0 0.22390228509902954" rpy="0 0 0"/>
+    <origin xyz="0 0 0.22864733636379242" rpy="0 0 0"/>
     <axis  xyz="0 0 0"/>
   </joint>
   <joint name="torso_top_to_neck" type="fixed">
     <parent link="torso_top"/>
     <child  link="neck"/>
-    <origin xyz="0 0 0.2077152170240879" rpy="0 0 0"/>
+    <origin xyz="0 0 0.24094677716493607" rpy="0 0 0"/>
     <axis  xyz="0 0 0"/>
   </joint>
   <joint name="neck_to_head" type="fixed">
@@ -283,77 +283,77 @@
   <joint name="torso_mid_to_upper_arm_left" type="fixed">
     <parent link="torso_mid"/>
     <child  link="upper_arm_left"/>
-    <origin xyz="0 -0.290840320289135 0.035485073924064636" rpy="0 0 1.57"/>
+    <origin xyz="0 -0.2639159820973873 0.010754510760307312" rpy="0 0 1.57"/>
     <axis  xyz="0 0 0"/>
   </joint>
   <joint name="upper_arm_left_to_forearm" type="revolute">
     <parent link="upper_arm_left"/>
     <child  link="forearm_left"/>
-    <origin xyz="0 0 -0.2657824754714966" rpy="0 0 0"/>
+    <origin xyz="0 0 -0.2944090664386749" rpy="0 0 0"/>
     <axis  xyz="0 0 1"/>
     <limit effort="1" lower="-1.57" upper="1.57" velocity="1"/>
   </joint>
   <joint name="forearm_to_hand" type="fixed">
     <parent link="forearm_left"/>
     <child  link="hand_left"/>
-    <origin xyz="0 0 -0.09064928442239761" rpy="0 0 0"/>
+    <origin xyz="0 0 -0.09796416759490967" rpy="0 0 0"/>
     <axis  xyz="0 0 0"/>
   </joint>
   <joint name="torso_mid_to_upper_arm_right" type="fixed">
     <parent link="torso_mid"/>
     <child  link="upper_arm_right"/>
-    <origin xyz="0 0.290840320289135 0.035485073924064636" rpy="0 0 -1.57"/>
+    <origin xyz="0 0.2639159820973873 0.010754510760307312" rpy="0 0 -1.57"/>
     <axis  xyz="0 0 0"/>
   </joint>
   <joint name="upper_arm_right_to_forearm" type="revolute">
     <parent link="upper_arm_right"/>
     <child  link="forearm_right"/>
-    <origin xyz="0 0 -0.2657824754714966" rpy="0 0 0"/>
+    <origin xyz="0 0 -0.2944090664386749" rpy="0 0 0"/>
     <axis  xyz="0 0 1"/>
     <limit effort="1" lower="-1.57" upper="1.57" velocity="1"/>
   </joint>
   <joint name="forearm_to_hand_right" type="fixed">
     <parent link="forearm_right"/>
     <child  link="hand_right"/>
-    <origin xyz="0 0 -0.09064928442239761" rpy="0 0 0"/>
+    <origin xyz="0 0 -0.09796416759490967" rpy="0 0 0"/>
     <axis  xyz="0 0 0"/>
   </joint>
   <joint name="torso_bottom_to_upper_leg_left" type="fixed">
     <parent link="torso_bottom"/>
     <child  link="upper_leg_left"/>
-    <origin xyz="0 -0.06983193755149841 -0.35980966687202454" rpy="0 0 0"/>
+    <origin xyz="0 -0.07464926689863205 -0.4176444113254547" rpy="0 0 0"/>
     <axis  xyz="0 0 0"/>
   </joint>
   <joint name="upper_leg_left_to_lower_leg" type="revolute">
     <parent link="upper_leg_left"/>
     <child  link="lower_leg_left"/>
-    <origin xyz="0 0 -0.3706740140914917" rpy="0 0 0"/>
+    <origin xyz="0 0 -0.43394097685813904" rpy="0 0 0"/>
     <axis  xyz="0 0 1"/>
     <limit effort="1" lower="-1.57" upper="1.57" velocity="1"/>
   </joint>
   <joint name="lower_leg_left_to_foot" type="fixed">
     <parent link="lower_leg_left"/>
     <child  link="foot_left"/>
-    <origin xyz="0.08745751157402992 0 -0.06745107471942902" rpy="0 0 1.57"/>
+    <origin xyz="0.10210202634334564 0 -0.07403331995010376" rpy="0 0 1.57"/>
     <axis  xyz="0 0 0"/>
   </joint>
   <joint name="torso_bottom_to_upper_leg_right" type="fixed">
     <parent link="torso_bottom"/>
     <child  link="upper_leg_right"/>
-    <origin xyz="0 0.06983193755149841 -0.35980966687202454" rpy="0 0 0"/>
+    <origin xyz="0 0.07464926689863205 -0.4176444113254547" rpy="0 0 0"/>
     <axis  xyz="0 0 0"/>
   </joint>
   <joint name="upper_leg_right_to_lower_leg" type="revolute">
     <parent link="upper_leg_right"/>
     <child  link="lower_leg_right"/>
-    <origin xyz="0 0 -0.3706740140914917" rpy="0 0 0"/>
+    <origin xyz="0 0 -0.43394097685813904" rpy="0 0 0"/>
     <axis  xyz="0 0 1"/>
     <limit effort="1" lower="-1.57" upper="1.57" velocity="1"/>
   </joint>
   <joint name="lower_leg_right_to_foot" type="fixed">
     <parent link="lower_leg_right"/>
     <child  link="foot_right"/>
-    <origin xyz="0.08745751157402992 0 -0.06745107471942902" rpy="0 0 1.57"/>
+    <origin xyz="0.10210202634334564 0 -0.07403331995010376" rpy="0 0 1.57"/>
     <axis  xyz="0 0 0"/>
   </joint>
 </robot>
