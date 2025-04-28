@@ -127,9 +127,15 @@ def generate_all_meshes(Ansur, inputheight):
     else:
         measurements = get_measurements(Ansur, inputheight).iloc[0]
 
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+    except NameError:
+        # __file__ doesn't exist (e.g. in a notebook), so use cwd
+        script_dir = os.getcwd()
+
     output_dir = os.path.join(script_dir, "model_output")
     os.makedirs(output_dir, exist_ok=True)
+
 
     # --- torso ---
     torso_parts = {
