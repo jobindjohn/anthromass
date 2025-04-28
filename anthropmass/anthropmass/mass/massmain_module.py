@@ -8,4 +8,4 @@ from .measurements_heights_module import *
 from .com_calculation_module import *
 from .volume_calculation_module import *
 from .plot_body_module import *
-
+from .massclauser_module import *
