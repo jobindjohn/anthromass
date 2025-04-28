@@ -237,3 +237,20 @@ def plot_body(Ansur, inputheight):
 
 
 
+        
+
+    # Axes styling
+    ax.axhline(0, color='black')
+    #ax.axvline(0, color='black')
+    ax.set_title("Body Segments with Center of Mass (Front view)")
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_xlim(-1.25, 1.25)
+    ax.set_ylim(0, 2.5)
+    ax.set_aspect('equal')
+    ax.grid(True)
+    plt.show()
+
+
+
+
