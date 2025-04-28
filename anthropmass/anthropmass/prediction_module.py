@@ -10,55 +10,58 @@ from .data_module import *
 from .anthro_module import *
 from .bambi_module import *
 
-# %% ../nbs/200_anthropometry.ipynb 5
+# %% ../nbs/200_anthropometry.ipynb 4
 def normalize_person(weight, height, gender):
     person=pd.DataFrame({'weightkg': [weight], 'stature': [height], 'Gender': [gender]})
     normalize(person, 'weightkg')
     normalize(person, 'stature')
     return person
 
-# %% ../nbs/200_anthropometry.ipynb 7
+# %% ../nbs/200_anthropometry.ipynb 6
 def get_pickled_model(kindofmodel:str, measurement:str):
     filepath = f'../output/anthro_models/{kindofmodel}/pickle_{measurement}_{kindofmodel}'
     with open(filepath,'rb') as file:
         model=pickle.load(file)
     return model
 
-# %% ../nbs/200_anthropometry.ipynb 9
-def predict_from_model(kindofmodel:str, measurement:str, w, h, g):
+# %% ../nbs/200_anthropometry.ipynb 8
+def predict_from_model(kindofmodel:str, measurement:str, w, h, g, c=False):
+    
     pickledmodel = get_pickled_model(kindofmodel, measurement)
     person = normalize_person(w, h, g)
+
     if kindofmodel=='xgboost':
         return pickledmodel.predict(person)
+    
     elif kindofmodel=='bambi':
         model = model_bmb(measurement)
         return predict_mean_bmb(pickledmodel, model, person, measurement)
+    
     elif kindofmodel=='bambi_c':
+        if c!= False:
+            person['Component']=c
+        else:
+            person['Component']='Army Reserve'
         formula='0 + C(Gender) + Component + weightkg + stature'
         model = make_model_formula(measurement, formula)
-        person['Component']='Army Reserve' #'Regular Army'#'Army National Guard'#'Army Reserve'
         return predict_mean_bmb(pickledmodel, model, person, measurement)
-    elif kindofmodel=='bambi_ml_gc':
-        train=pd.read_csv('../data/processed/ANSURIInormalizedtrain.csv')
-        model = component_model(measurement,train)
-        person['Component']='Army Reserve' #'Regular Army'#'Army National Guard'#'Army Reserve'
-        return predict_mean_bmb(pickledmodel, model, person, measurement)
+    
     else:
         return 'wrong model name'
 
-# %% ../nbs/200_anthropometry.ipynb 10
+# %% ../nbs/200_anthropometry.ipynb 9
 def add_to_df(df, measurement, pred):
     df[measurement]=pred
     return df
 
-# %% ../nbs/200_anthropometry.ipynb 12
+# %% ../nbs/200_anthropometry.ipynb 11
 def make_csv(data, name):
     data.to_csv(f'{name}.csv', index=False)
 
-# %% ../nbs/200_anthropometry.ipynb 14
-def make_predictions(kindofmodel:str, measurements:list, w, h, g):
+# %% ../nbs/200_anthropometry.ipynb 13
+def make_predictions(kindofmodel:str, measurements:list, w, h, g, c=False):
     output=pd.DataFrame()
     for m in measurements:
-        pred = predict_from_model(kindofmodel, m, w, h, g)
+        pred = predict_from_model(kindofmodel, m, w, h, g, c=False)
         add_to_df(output, m, pred)
     return output
