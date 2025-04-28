@@ -10,13 +10,13 @@ from .measurements_heights_module import *
 from .com_calculation_module import *
 
 # %% ../../nbs/640_mass_plot_body.ipynb 3
-def plot_body(Ansur):
+def plot_body(Ansur, inputheight):
     """
     Draws a front-view plot of the body segments with COM points.
     """
-    m = get_measurements(Ansur)
-    heights = get_heights(Ansur)
-    com = get_com(Ansur)
+    m = get_measurements(Ansur, inputheight)
+    heights = get_heights(Ansur, inputheight)
+    com = get_com(Ansur, inputheight)
 
     m = m.iloc[0]
     heights = heights.iloc[0]
@@ -36,9 +36,15 @@ def plot_body(Ansur):
     h4 = m["h4"]
     h6 = m["h6"]
     a5 = m["a5"]
+    a8 = m["a8"]
+    a9 = m["a9"]
     r1thigh = m["r1thigh"]
     r2thigh = m["r2thigh"]
     thighdelta = r1thigh - r2thigh
+
+
+
+
 
     # Use trunk height (base for head and arms) from get_heights
     TrunkH = heights["TrunkH"]
@@ -49,6 +55,8 @@ def plot_body(Ansur):
     ShankH = heights["ShankH"]
     UpperArmH = heights["UpperArmH"]
     LowerArmH = heights["LowerArmH"]
+    NeckH = heights["NeckH"]
+    HeadH = heights["head"]
     TotalH = heights["TotalH"]
 
     # COM points (2D projection)
@@ -58,26 +66,52 @@ def plot_body(Ansur):
         "Lower Trunk": com["LTMC"],
         "Head": com["HeMC"],
         "Left Thigh": com["LTHMC"],
-        "Right Thigh": com["RTHMC"],
+        "Thigh": com["RTHMC"],
         "Left Shank": com["LSHMC"],
-        "Right Shank": com["RSHMC"],
+        "Shank": com["RSHMC"],
         "Left Upper Arm": com["LUAMC"],
-        "Right Upper Arm": com["RUAMC"],
+        "Upper Arm": com["RUAMC"],
         "Left Lower Arm": com["LLAMC"],
-        "Right Lower Arm": com["RLAMC"],
+        "Lower Arm": com["RLAMC"],
         "Left Foot": com["LFMC"],
-        "Right Foot": com["RFMC"],
+        "Foot": com["RFMC"],
+        "Left Hand": com["LHMC"],
+        "Hand": com["RHMC"],
+        #"Neck": com["NMC"]
     }
 
     # Create figure
     fig, ax = plt.subplots(figsize=(8, 8))
 
-    # Plot COM points
+  # Plot COM points
+  # Plot COM points
     for label, (x, y) in points.items():
         ax.scatter(x, y, color='red')
-        ax.text(x + 0.05, y, label, fontsize=8)
+        
+        if not label.strip().startswith("Left"):
+            y_offset = 0.04 if label == "Thigh" else 0  # move "Thigh" label up
+            ax.text(
+                x + 0.03, y + y_offset, label,
+                fontsize=8
+            )
+
+
+
 
     # Draw body segment shapes
+    neck_coords = [
+        (-a9, NeckH),
+        (a9, NeckH),
+        (a9, NeckH + a8),
+        (-a9, NeckH + a8)
+    ]
+    ax.add_patch(Polygon(neck_coords, closed=True, fill=False, edgecolor='blue'))
+
+
+
+
+
+
 
     # Upper Trunk (Rectangle)
     upper_trunk_coords = [
@@ -187,18 +221,19 @@ def plot_body(Ansur):
     ax.add_patch(Ellipse(((thighdelta + m["r1shank"]), a5), a5 * 2, a5 * 2,
                          fill=False, edgecolor='purple', linewidth=1.5))
     # Head (Ellipse) - position the head on top of the trunk height
-    ax.add_patch(Ellipse((0, TrunkH + m["a7"]), m["b8"] * 2, m["a7"] * 2,
+    ax.add_patch(Ellipse((0, HeadH + m["a7"]), m["b8"] * 2, m["a7"] * 2,
                          fill=False, edgecolor='purple', linewidth=1.5))
+    
 
-    # Axes styling
-    ax.axhline(0, color='black')
-    ax.axvline(0, color='black')
-    ax.set_title("Body Segments with Center of Mass (Front view)")
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
-    ax.set_xlim(-1.25, 1.25)
-    ax.set_ylim(0, 2.5)
-    ax.set_aspect('equal')
-    ax.grid(True)
-    plt.show()
+
+    # Left Hand (Ellipse) - position the head on top of the trunk height
+    ax.add_patch(Ellipse((-(a1 + r1), LowerArmH-m["h9"]), m["b7"] * 2, m["h9"] * 2,
+                         fill=False, edgecolor='purple', linewidth=1.5))
+    
+        # Hand (Ellipse) - position the head on top of the trunk height
+    ax.add_patch(Ellipse(((a1 + r1), LowerArmH-m["h9"]), m["b7"] * 2, m["h9"] * 2,
+                         fill=False, edgecolor='purple', linewidth=1.5))
+    
+
+
 

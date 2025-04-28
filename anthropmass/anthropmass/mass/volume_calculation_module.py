@@ -8,11 +8,11 @@ import numpy as np
 from .measurements_heights_module import *
 
 # %% ../../nbs/620_mass_volume_calc.ipynb 3
-def get_volumes(Ansur):
+def get_volumes(Ansur, inputheight):
     """
     Computes the volumes for each body segment and the total volume.
     """
-    m = get_measurements(Ansur)
+    m = get_measurements(Ansur, inputheight)
     m=m.iloc[0]
     # Upper trunk volume
     vUT = np.pi * m["a1"] * m["b1"] * m["h1"]
@@ -33,13 +33,24 @@ def get_volumes(Ansur):
                                      np.sqrt(m["a5"] * m["b5"] * m["a6"] * m["b6"]))
     # Upper arm volume
     vUA = (1/3) * np.pi * m["h8"] * (m["r1"]**2 + m["r2"]**2 + m["r1"] * m["r2"])
-    # Hand volume
-    vH = 0.85 * (m["c7"] / (np.pi * 2)) * (m["b7"] / 2) * m["h9"]
-    # Head volume
+
+    # Hand (closed fist) volume (estimated as ellipsoid)
+    vH = (4 / 3) * np.pi * (m["h9"]) * m["b7"]*m["r7"]
+
+
+    # Head volume (not used in 2D plot)
     vHe = (4/3) * np.pi * (m["a7"]**2) * m["b8"]
+
+    # Head2 volume (This is used to get a more accurate weight estimation for the head-neck part, is not visually represented)
+    vHe2 = (4/3) * np.pi * ((m["a7"]+(m["a8"]/2))**2) * m["b8"]
+
     # Lower arm volume
     vLA = (1/3) * np.pi * m["h10"] * (m["r3"]**2 + m["r4"]**2 + m["r3"] * m["r4"])
 
+    #Neck
+    vN = np.pi*(m["a9"]**2)*m["a8"]
+
+    
     volumes = {
         "vUT": vUT,
         "vMT": vMT,
@@ -50,10 +61,11 @@ def get_volumes(Ansur):
         "vUA": vUA,
         "vH": vH,
         "vHe": vHe,
+        "vN": vN,
         "vLA": vLA,
     }
     # Total volume (using your provided formula)
-    vTOT = vHe + vUT + vMT + vLT + 2 * (vUA + vLA + vH + vT + vS + vF)
+    vTOT = vHe2 + vUT + vMT + vLT + 2 * (vUA + vLA + vH + vT + vS + vF) #Here we use vHe2 instead of vHe + vN since the Modified hanvan model is intended to be used this way
     volumes["vTOT"] = vTOT
     return volumes
 

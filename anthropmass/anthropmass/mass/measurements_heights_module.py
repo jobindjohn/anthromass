@@ -6,19 +6,20 @@ __all__ = ['get_measurements', 'get_heights']
 # %% ../../nbs/610_mass_measurements_heights.ipynb 2
 import numpy as np
 import pandas as pd
+from scipy.optimize import fsolve
 # This file computes the intermediate measurements and heights.
 # Note: The Ansur list is not defined here; you will pass it as a parameter.
 
 # %% ../../nbs/610_mass_measurements_heights.ipynb 3
-def get_measurements(Ansur):
+def get_measurements(Ansur, inputheight):
     measurements = pd.DataFrame()
     # Upper trunk
     measurements["a1"] = Ansur['biacromialbreadth'] / 2000
     measurements["b1"] = Ansur['chestdepth'] / 2000
-    measurements["h1"] = (Ansur['cervicaleheight'] - Ansur['axillaheight']) / 1000  # D21
+    measurements["h1"] = (Ansur['acromialheight'] - Ansur['chestheight']) / 1000   # D21
 
     # Middle trunk
-    measurements["h2"] = (Ansur['axillaheight'] - Ansur['waistheightomphalion']) / 1000  # D5
+    measurements["h2"] = (Ansur['chestheight'] - Ansur['waistheightomphalion']) / 1000  # D5
     measurements["a2"] = Ansur['biacromialbreadth'] / 2000
     measurements["b2"] = Ansur['chestdepth'] / 2000
     measurements["a3"] = Ansur['waistbreadth'] / 2000
@@ -27,7 +28,7 @@ def get_measurements(Ansur):
     # Lower trunk
     measurements["a4"] = Ansur['waistbreadth'] / 2000
     measurements["b4"] = Ansur['waistdepth'] / 2000
-    measurements["h3"] = (Ansur['iliocristaleheight'] - Ansur['trochanterionheight']) / 1000  # D22
+    measurements["h3"] = (Ansur['waistheightomphalion'] - Ansur['trochanterionheight']) / 1000  # D22
 
     # Thigh
     measurements["h4"] = (Ansur['trochanterionheight'] - Ansur['lateralfemoralepicondyleheight']) / 1000  # D29
@@ -44,7 +45,7 @@ def get_measurements(Ansur):
     measurements["r2shank"] = measurements["c4"] / (2 * np.pi)
 
     # Foot
-    measurements["a5"] = (Ansur['heelanklecircumference'] / 1000) / (2 * np.pi)
+    measurements["a5"] = Ansur['lateralmalleolusheight'] / 1000 / 2
     measurements["b5"] = (Ansur['heelanklecircumference'] / 1000) / (2 * np.pi)
     measurements["a6"] = (((Ansur['footbreadthhorizontal'] / 1000) + ((Ansur['footbreadthhorizontal'] / 1000) / 4)) / 4)
     measurements["b6"] = (((Ansur['balloffootcircumference'] / 1000) + ((Ansur['footbreadthhorizontal'] / 1000) / 2)) / (2 * np.pi)) - measurements["a6"]
@@ -55,38 +56,77 @@ def get_measurements(Ansur):
     measurements["r2"] = (Ansur['forearmcircumferenceflexed'] / 1000) / (2 * np.pi)
     measurements["h8"] = Ansur['shoulderelbowlength'] / 1000
 
-    # Hand
-    measurements["c7"] = Ansur['handcircumference'] / 2000
-    measurements["h9"] = Ansur['handlength'] / 2000
+    # Hand 
+    measurements["c7"] = (Ansur['handcircumference'] / 1000)
+    measurements["h9"] = Ansur['handlength'] / 4000                    #h9 is estimated to be one fourth of wrist to finger tip (h9 used for radius later)
     measurements["b7"] = Ansur['handbreadth'] / 2000
 
+  
+  
+    #Note: the shortest axis (if hand is assumed to be an ellipsoid) is not possible to estimate directly so a solver using "Ramanujan's Approximation for Ellipse Circumference" is used
+    # Given values
+    C = measurements["c7"]  # circumference in meters (e.g., neck or hand circumference)
+    a = measurements["b7"]  # major axis in meters (e.g., anterior-posterior diameter)
+    # Define the equation to solve
+    def equation(b):
+        h = ((a - b) / (a + b))**2
+        approx_C = np.pi * (a + b) * (1 + (3 * h) / (10 + np.sqrt(4 - 3 * h)))
+        return approx_C - C
+
+    # Initial guess for b
+    b_initial = a * 0.8
+
+    # Solve for b
+    measurements["r7"] = fsolve(equation, b_initial)[0]
+
+    
+
+
+    
+
     # Head
-    measurements["b8"] = Ansur['headbreadth'] / 2000
-    measurements["a7"] = Ansur['tragiontopofhead'] / 1000
+    measurements["b8"] = Ansur['headbreadth'] / 2000         
+    measurements["a7"] = (Ansur['mentonsellionlength'])/ 1000 
+
+    # Neck
+    measurements["a8" ] = (((Ansur['eyeheightsitting'] + inputheight - Ansur['sittingheight']) - Ansur['mentonsellionlength']) - Ansur['acromialheight'])/1000      #Legnth of neck
+    measurements["a9"] = (Ansur['neckcircumference'] / 1000)/(2*np.pi) #estimated radius of neck
+    
+    
+
 
     # Lower arm
     measurements["h10"] = (Ansur['forearmhandlength'] - Ansur['handlength']) / 1000  # D15
     measurements["r3"] = (Ansur['forearmcircumferenceflexed'] / 1000) / (2 * np.pi)
     measurements["r4"] = (Ansur['wristcircumference'] / 1000) / (2 * np.pi)
 
+
+
+
+
+    measurements["hb"] = Ansur["hipbreadth"] /1000
+ 
+
     return measurements
 
-
 # %% ../../nbs/610_mass_measurements_heights.ipynb 4
-def get_heights(Ansur):
-    m = get_measurements(Ansur)
+def get_heights(Ansur, inputheight):
+    m = get_measurements(Ansur, inputheight)
     #heights = {}
     heights = pd.DataFrame()
     # Compute trunk height as in your original code:
     # (h1+h2+h3+h4+h6 + 2*a5) which is used for head and arms
     trunk_height = m["h1"] + m["h2"] + m["h3"] + m["h4"] + m["h6"] + m["a5"] * 2
     # Total estimated height (includes head length, 2*a7)
-    total_height = trunk_height + m["a7"] * 2
+    total_height = m["h1"] + m["h2"] + m["h3"] + m["h4"] + m["h6"] + m["a5"] * 2 + m["a7"] * 2 +m["a8"]
     
     # For plotting body segments (trunk, arms, etc.), use trunk_height
     heights["TrunkH"] = trunk_height  
     heights["TotalH"] = total_height   # overall estimated height
     
+    heights['neck'] =m["a8"] + m["a5"] * 2 + m["h6"] + m["h4"] + m["h3"] + m["h2"] + m["h1"] + m["a8"]
+    heights['head'] = m["a5"] * 2 + m["h6"] + m["h4"] + m["h3"] + m["h2"] + m["h1"] + m["a8"]
+    heights['NeckH'] = m["a5"] * 2 + m["h6"] + m["h4"] + m["h3"] + m["h2"] + m["h1"]
     heights["UpperTrunkH"] = m["a5"] * 2 + m["h6"] + m["h4"] + m["h3"] + m["h2"]
     heights["MiddleTrunkH"] = m["a5"] * 2 + m["h6"] + m["h4"] + m["h3"]
     heights["LowerTrunkH"] = m["a5"] * 2 + m["h6"] + m["h4"]
@@ -95,6 +135,7 @@ def get_heights(Ansur):
     # Arms are positioned relative to the trunk height:
     heights["UpperArmH"] = trunk_height - m["h8"]
     heights["LowerArmH"] = heights["UpperArmH"] - m["h10"]
+    heights["HandH"] = heights["UpperArmH"] - m["h10"] - m["h9"]
     heights["FootH"] = 0  # as specified
     return heights
 
