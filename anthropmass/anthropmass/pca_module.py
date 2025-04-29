@@ -143,9 +143,13 @@ def PC2_plot_biplot(data,data_scaled,subset: list,subsetname: str,compare: str, 
             for i in top_10_indices:
                 plt.arrow(0, 0, loadings[i, 0]*0.006, loadings[i, 1]*0.006, color='red', alpha=0.5, width=0.00003)
                 plt.text(loadings[i, 0]*0.006+0.0001, loadings[i, 1]*0.006, df_subset.columns[i], color='red') 
+        elif subsetname == 'Torso':
+            for i in top_10_indices:
+                plt.arrow(0, 0, loadings[i, 0]*0.006, loadings[i, 1]*0.006, color='red', alpha=0.5, width=0.00003)
+                plt.text(loadings[i, 0]*0.006+0.0001, loadings[i, 1]*0.006, df_subset.columns[i], color='red') 
         else:
             for i, var in enumerate(df_subset.columns):
-                plt.arrow(0, 0, loadings[i, 0]*0.0008, loadings[i, 1]*0.0003, color='red', alpha=0.5, width=0.000002)
+                plt.arrow(0, 0, loadings[i, 0]*0.0003, loadings[i, 1]*0.0003, color='red', alpha=0.5, width=0.000002)
                 plt.text(loadings[i, 0]*0.0003, loadings[i, 1]*0.0003, var, color='red')
         
         plt.legend(title= compare,loc="upper left", bbox_to_anchor=(1, 1))
@@ -201,18 +205,16 @@ def plot_loadings(data,subset: list,subsetname:str, number:int,ax=None):
     if ax is None:
         #sns.barplot(x=df_loadings.keys(), y=df_loadings_val[f'PC{number}'])
         sns.barplot(x=top_10_values.T.keys(), y=top_10_values[f'PC{number}'])
-      
-        plt.title('Value of top 10 loadings with biggest influence')
+        plt.title(f'Value of top {len(top_10_values.T.keys())} loadings with biggest influence - {subsetname}')
         plt.ylabel(f'PC{number}')
         plt.xlabel('Measurement')
         plt.axhline(0, color='black', linewidth=0.8)  # Lägg till en linje vid y=0
         plt.xticks(rotation=90)
-
         plt.show()
     else:
         sns.barplot(x=top_10_values.T.keys(), y=top_10_values[f'PC{number}'],ax=ax)
         # Anpassa plotten
-        ax.set_title('Value of top 10 loadings with biggest influence'+ '-' + subsetname)
+        ax.set_title(f'Value of top {len(top_10_values.T.keys())} loadings with biggest influence - {subsetname}')
         ax.set_ylabel(f'PC{number}')
         ax.set_xlabel('Measurement')
         ax.axhline(0, color='black', linewidth=0.8)  # Lägg till en linje vid y=0
