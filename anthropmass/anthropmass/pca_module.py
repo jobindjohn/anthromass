@@ -145,8 +145,8 @@ def PC2_plot_biplot(data,data_scaled,subset: list,subsetname: str,compare: str, 
                 plt.text(loadings[i, 0]*0.006+0.0001, loadings[i, 1]*0.006, df_subset.columns[i], color='red') 
         elif subsetname == 'Torso':
             for i in top_10_indices:
-                plt.arrow(0, 0, loadings[i, 0]*0.006, loadings[i, 1]*0.006, color='red', alpha=0.5, width=0.00003)
-                plt.text(loadings[i, 0]*0.006+0.0001, loadings[i, 1]*0.006, df_subset.columns[i], color='red') 
+                plt.arrow(0, 0, loadings[i, 0]*0.005, loadings[i, 1]*0.005, color='red', alpha=0.5, width=0.00002)
+                plt.text(loadings[i, 0]*0.005+0.0001, loadings[i, 1]*0.005, df_subset.columns[i], color='red') 
         else:
             for i, var in enumerate(df_subset.columns):
                 plt.arrow(0, 0, loadings[i, 0]*0.0003, loadings[i, 1]*0.0003, color='red', alpha=0.5, width=0.000002)
@@ -205,9 +205,7 @@ def plot_loadings(data,subset: list,subsetname:str, number:int,ax=None):
     if ax is None:
         #sns.barplot(x=df_loadings.keys(), y=df_loadings_val[f'PC{number}'])
         sns.barplot(x=top_10_values.T.keys(), y=top_10_values[f'PC{number}'])
-
         plt.title(f'Value of top {len(top_10_values.T.keys())} loadings with biggest influence - {subsetname}')
-      
         plt.ylabel(f'PC{number}')
         plt.xlabel('Measurement')
         plt.axhline(0, color='black', linewidth=0.8)  # Lägg till en linje vid y=0
