@@ -205,7 +205,9 @@ def plot_loadings(data,subset: list,subsetname:str, number:int,ax=None):
     if ax is None:
         #sns.barplot(x=df_loadings.keys(), y=df_loadings_val[f'PC{number}'])
         sns.barplot(x=top_10_values.T.keys(), y=top_10_values[f'PC{number}'])
+
         plt.title(f'Value of top {len(top_10_values.T.keys())} loadings with biggest influence - {subsetname}')
+      
         plt.ylabel(f'PC{number}')
         plt.xlabel('Measurement')
         plt.axhline(0, color='black', linewidth=0.8)  # Lägg till en linje vid y=0
