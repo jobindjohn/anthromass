@@ -32,7 +32,7 @@ def scree_plot(data, subset: list ,subset_name: str):
             print('Interesting PCs to get 95%: '+ str(labels[:i+1]))
             break
     
-    plt.bar(x=range(1,len(per_var)+1), height=per_var, tick_label=labels)
+    plt.bar(x=range(1,len(per_var[:7])+1), height=per_var, tick_label=labels)
     plt.ylabel('Percentage of Explained Variance')
     plt.xlabel('Principal Component')
     plt.title('Scree Plot: '+subset_name)
