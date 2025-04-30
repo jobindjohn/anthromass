@@ -44,7 +44,9 @@ def predict_from_model(kindofmodel:str, measurement:str, w, h, g, c=False):
         return pickledmodel.predict(person)
     
     elif kindofmodel=='bambi':
-        model = model_bmb(measurement)
+        #model = model_bmb(measurement)
+        formula = 'weightkg + stature + Gender'
+        model = make_model_formula(measurement, formula)
         return predict_mean_bmb(pickledmodel, model, person, measurement)
     
     elif kindofmodel=='bambi_c':
@@ -86,6 +88,7 @@ def predict_for_group(kindofmodel:str, measurements:list, group:dict, n=False):
             pred_row = make_predictions(kindofmodel, measurements, row['weightkg'], row['stature'], row['Gender'], row['Component'])
         else:
             pred_row = make_predictions(kindofmodel, measurements, row['weightkg'], row['stature'], row['Gender'])
+            print('röv')
         preds_all = pd.concat([preds_all, pred_row], ignore_index=True)
         if index == n:
             return preds_all
