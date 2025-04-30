@@ -80,7 +80,8 @@ def make_predictions(kindofmodel:str, measurements:list, w, h, g, c=False):
 def predict_for_group(kindofmodel:str, measurements:list, group:dict, n=False):
     preds_all=pd.DataFrame()
     for index, row in group.iterrows():
-        print('index:', index)
+        if index%10 == 0:
+            print('index:', index)
         if kindofmodel == 'bambi_c':
             pred_row = make_predictions(kindofmodel, measurements, row['weightkg'], row['stature'], row['Gender'], row['Component'])
         else:

@@ -50,5 +50,5 @@ def predict_mean_bmb(fitted, model, data, measurement):
     mean_pred=[]
     for row in predictions:
         mean_pred.append(row.values.mean())    
-    pred_df['neckcircumference']=mean_pred
+    pred_df[measurement]=mean_pred
     return pred_df
