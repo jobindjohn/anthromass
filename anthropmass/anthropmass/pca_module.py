@@ -117,10 +117,10 @@ def PC2_plot_biplot(data,data_scaled,subset: list,subsetname: str,compare: str, 
     
     loadings = pca.components_.T
     per_var = np.round(pca.explained_variance_ratio_* 100, decimals=1)
-    # Beräkna totala laddningar
-    total_loadings = np.sum(np.abs(loadings), axis=1)
-    # Välj de 10 största laddningarna
-    top_10_indices = np.argsort(total_loadings)[-10:]
+
+    loading_lengths = np.linalg.norm(loadings[:, :2], axis=1)  # L2-norm (dvs. längden på pilen)
+    # Indices till de 10 längsta pilarna
+    top_10_indices = np.argsort(loading_lengths)[-10:]  
 
     # Plotta PC1 vs PC2 färglagd efter kön
     #plt.figure(figsize=(8,6))

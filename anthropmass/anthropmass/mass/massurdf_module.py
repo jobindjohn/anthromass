@@ -3,14 +3,14 @@
 # %% auto 0
 __all__ = ['create_urdf']
 
-# %% ../../nbs/660_mass_generate_urdf.ipynb 1
+# %% ../../nbs/660_mass_generate_urdf.ipynb 2
 import os
 import pandas as pd
 from .measurements_heights_module import *
 
 #from measurements_heightsC import get_measurements, get_heights
 
-# %% ../../nbs/660_mass_generate_urdf.ipynb 2
+# %% ../../nbs/660_mass_generate_urdf.ipynb 3
 # === URDF Generation ===
 def create_urdf(Ansur, inputheight):
     # if this is still raw ANSUR data, compute measurements/heights
