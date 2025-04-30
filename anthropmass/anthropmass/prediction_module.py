@@ -37,8 +37,8 @@ def predict_from_model(kindofmodel:str, measurement:str, w, h, g, c=False):
     
     pickledmodel = get_pickled_model(kindofmodel, measurement)
     #person = normalize_person(w, h, g)
-    person=pd.DataFrame({'weightkg': [w], 'stature': [h], 'Gender': [g]})
-    #person= minus_mean_person(w,h,g)
+    #person=pd.DataFrame({'weightkg': [w], 'stature': [h], 'Gender': [g]})
+    person= minus_mean_person(w,h,g)
 
     if kindofmodel=='xgboost':
         return pickledmodel.predict(person)
