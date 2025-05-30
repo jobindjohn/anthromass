@@ -34,14 +34,12 @@ def get_pickled_model(kindofmodel:str, measurement:str):
 # %% ../nbs/200_anthropometry.ipynb 10
 def predict_from_model(pickledmodel, kindofmodel:str, measurement:str, input_person:dict, c=False):
     person = minus_mean(input_person,['weightkg','stature'])
-    print('c',c)
     if kindofmodel=='xgboost':
         return pickledmodel.predict(person)
     
     elif kindofmodel=='bambi':
         formula = 'weightkg + stature + C(Gender)'
         model = make_model_formula(measurement, formula)
-        print('badbumbi')
         return predict_mean_bmb(pickledmodel, model, person, measurement)
     
     elif kindofmodel=='bambi_c':
@@ -49,11 +47,9 @@ def predict_from_model(pickledmodel, kindofmodel:str, measurement:str, input_per
             person['Component']=c
         elif c!= False:
             person['Component']=c
-            print('comp:',c)
         
         else:
             person['Component']='Army Reserve'
-            print('relseeee',person)
         formula='0 + C(Gender) + Component + weightkg + stature'
         model = make_model_formula(measurement, formula)
         return predict_mean_bmb(pickledmodel, model, person, measurement)

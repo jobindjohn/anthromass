@@ -22,14 +22,15 @@ def normalize_all(data:dict, measurement:list):
     return data
 
 # %% ../nbs/100_data.ipynb 9
-def minus_mean(data:dict, measurement:list):
+def minus_mean(data:pd.DataFrame, measurement:list):
     ansur=pd.read_csv('../data/processed/ANSURIImalefemale.csv')
+    datacopy = data.copy()
     for m in measurement:
         avg_m = ansur[m].mean()
-        data[m] = data[m] - avg_m
-    return data
+        datacopy[m] = datacopy[m].astype(float) - avg_m
+    return datacopy
 
-# %% ../nbs/100_data.ipynb 15
+# %% ../nbs/100_data.ipynb 16
 def make_train_test(data:dict, test_size:float):
     train, test = train_test_split(data, test_size=test_size, shuffle=True, random_state=42)
     return train, test
