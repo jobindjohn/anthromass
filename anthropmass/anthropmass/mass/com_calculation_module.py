@@ -211,7 +211,7 @@ def get_joint_and_com_points(Ansur, inputheight, gender):
         "LLAMCL": LLAMCL, "LLAMC": LLAMC,
         "RLAMCL": RLAMCL, "RLAMC": RLAMC,
         "LFMCL": LFMCL, "LFMC": LFMC,
-        "RFMCL": RFMCL, "RFMC": RFMC,
+        "RFMCL": RFMCL, "RFMC": RFMC, "RFMCx": RFMCx,
         "LHMCL": LHMCL, "LHMC": LHMC,
         "RHMCL": RHMCL, "RHMC": RHMC,
         "NMCL": NMCL, "NMC": NMC

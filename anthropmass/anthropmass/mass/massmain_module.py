@@ -33,19 +33,19 @@ def main(Ansur, inputweight, inputheight, gender):
 
 
 
-    print(".......................................................")
+    print("..............................................................................................................")
 
     #Prints information about height and total estimated weight
     print("RESULTS:")
-    print("Estimated Height (m):", heights["TotalH"])
-    print("Actual Height (m):", inputheight/1000)
-    print("Total Estimated Weight (kg) using Clauser regression model",weights['mTOT'] )
-    print("Total Estimated Weight (kg) using Zatriosky regression model",weightsZat['mTOTzat'] )
+    print("Estimated Height:", heights["TotalH"], "m")
+    print("Actual Height:", inputheight/1000, "m")
+    print("Total Estimated Weight (kg) using Clauser regression model:",weights['mTOT'],"kg" )
+    print("Total Estimated Weight using Zatriosky regression model:",weightsZat['mTOTzat'],"kg" )
 
 
 
 
-    print(".......................................................")
+    print("..............................................................................................................")
 
 
 
@@ -69,13 +69,13 @@ def main(Ansur, inputweight, inputheight, gender):
     positions_df.loc[:, 'Hand'] = [0, round(com['RHMC'][0], 3), round(com['RHMC'][1], 3)]
     positions_df.loc[:, 'Thigh'] = [0, round(com['RTHMC'][0], 3), round(com['RTHMC'][1], 3)]
     positions_df.loc[:, 'Shank'] = [0, round(com['RSHMC'][0], 3), round(com['RSHMC'][1], 3)]
-    positions_df.loc[:, 'Foot'] = [0, round(com['RFMC'][0], 3), round(com['RFMC'][1], 3)]
+    positions_df.loc[:, 'Foot'] = [round(com['RFMCx'], 3), round(com['RFMC'][0], 3), round(com['RFMC'][1], 3)]
 
-    print("\nPositions of Body Segments (Custom Cartesian Mapping)\n")
+    print("\nCenter of mass positions:\n")
     print(positions_df.to_string())
 
 
-    print(".......................................................")
+    print("..............................................................................................................")
 
 
     #Prints the joint center positions and aranges in dataframe
@@ -94,11 +94,11 @@ def main(Ansur, inputweight, inputheight, gender):
         jc_positions_df.loc[:, joint] = [0, y_depth, z_height]
 
     # Display the table
-    print("\nJoint Center Positions\n")
+    print("\nJoint center positions:\n")
     print(jc_positions_df.to_string())
 
 
-    print(".......................................................")
+    print("..............................................................................................................")
 
 
 
@@ -160,25 +160,45 @@ def main(Ansur, inputweight, inputheight, gender):
     mass_df.loc["Zatsiorsky", "Foot"] = round(weightsZat["mFzat"], 3)
 
     # --- Display the table ---
-    print("\nSegment Mass Comparison (kg) — Detailed Trunk View\n")
+    print("\nSegment Mass Comparison (Kg):\n")
     print(mass_df.to_string())
 
 
+    print("..............................................................................................................")
 
 
-#Prints moments of inertia:
-    print(f"{'Upper Trunk':<12} {inertia['Ixx_UT']:>12.4f} {inertia['Iyy_UT']:>12.4f} {inertia['Izz_UT']:>12.4f}")
-    print(f"{'Middle Trunk':<12} {inertia['Ixx_MT']:>12.4f} {inertia['Iyy_MT']:>12.4f} {inertia['Izz_MT']:>12.4f}")
-    print(f"{'Lower Trunk':<12} {inertia['Ixx_LT']:>12.4f} {inertia['Iyy_LT']:>12.4f} {inertia['Izz_LT']:>12.4f}")
+    # Build a DataFrame for inertia that mirrors the style of your COM and mass tables
+    inertia_segments = [
+        "Upper Trunk", "Middle Trunk", "Lower Trunk",
+        "Thigh", "Shank", "Foot",
+        "Upper Arm", "Lower Arm", "Hand", "Head"
+    ]
 
-    print(f"{'Thigh':<12} {inertia['Ixx_T']:>12.4f} {inertia['Iyy_T']:>12.4f} {inertia['Izz_T']:>12.4f}")
-    print(f"{'Shank':<12} {inertia['Ixx_S']:>12.4f} {inertia['Iyy_S']:>12.4f} {inertia['Izz_S']:>12.4f}")
-    print(f"{'Foot':<12} {inertia['Ixx_F']:>12.4f} {inertia['Iyy_F']:>12.4f} {inertia['Izz_F']:>12.4f}")
+    inertia_df = pd.DataFrame(index=inertia_segments, columns=["Ixx", "Iyy", "Izz"])
 
-    print(f"{'Upper Arm':<12} {inertia['Ixx_UA']:>12.4f} {inertia['Iyy_UA']:>12.4f} {inertia['Izz_UA']:>12.4f}")
-    print(f"{'Lower Arm':<12} {inertia['Ixx_LA']:>12.4f} {inertia['Iyy_LA']:>12.4f} {inertia['Izz_LA']:>12.4f}")
-    print(f"{'Hand':<12} {inertia['Ixx_Ha']:>12.4f} {inertia['Iyy_Ha']:>12.4f} {inertia['Izz_Ha']:>12.4f}")
-    print(f"{'Head':<12} {inertia['Ixx_H']:>12.4f} {inertia['Iyy_H']:>12.4f} {inertia['Izz_H']:>12.4f}")
+    # Fill in each segment explicitly
+    inertia_df.loc["Upper Trunk"]  = [inertia["Ixx_UT"], inertia["Iyy_UT"], inertia["Izz_UT"]]
+    inertia_df.loc["Middle Trunk"] = [inertia["Ixx_MT"], inertia["Iyy_MT"], inertia["Izz_MT"]]
+    inertia_df.loc["Lower Trunk"]  = [inertia["Ixx_LT"], inertia["Iyy_LT"], inertia["Izz_LT"]]
+
+    inertia_df.loc["Thigh"]        = [inertia["Ixx_T"],  inertia["Iyy_T"],  inertia["Izz_T"]]
+    inertia_df.loc["Shank"]        = [inertia["Ixx_S"],  inertia["Iyy_S"],  inertia["Izz_S"]]
+    inertia_df.loc["Foot"]         = [inertia["Ixx_F"],  inertia["Iyy_F"],  inertia["Izz_F"]]
+
+    inertia_df.loc["Upper Arm"]    = [inertia["Ixx_UA"], inertia["Iyy_UA"], inertia["Izz_UA"]]
+    inertia_df.loc["Lower Arm"]    = [inertia["Ixx_LA"], inertia["Iyy_LA"], inertia["Izz_LA"]]
+    inertia_df.loc["Hand"]         = [inertia["Ixx_Ha"], inertia["Iyy_Ha"], inertia["Izz_Ha"]]
+    inertia_df.loc["Head"]         = [inertia["Ixx_H"],  inertia["Iyy_H"],  inertia["Izz_H"]]
+
+    # Round to four decimals for readability
+    inertia_df = inertia_df.astype(float).round(4)
+
+    # Display the table
+    print("\nSegment Moments of Inertia (kg·m²)\n")
+    print(inertia_df.to_string())
+
+
+    print("..............................................................................................................")
 
 
 

@@ -28,14 +28,14 @@ def calculate_inertia(Ansur, inputweight, inputheight):
     mHe = mass["mHe"]
     mTr = mass["mTr"]
 
-    print("mass head", mH)
+  
 
     # Volume of each trunk segment
     vUT = volumes["vUT"]
     vMT = volumes["vMT"]
     vLT = volumes["vLT"]
 
-    print("volume upper trunk", vUT)
+
 
     # Measurements of the segments
     a1, b1, h1 = measurements["a1"], measurements["b1"], measurements["h1"]
