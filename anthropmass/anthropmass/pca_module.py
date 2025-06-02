@@ -11,8 +11,8 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 
 # %% ../nbs/300_anthro_pca.ipynb 6
-def scree_plot(data, subset: list, subset_name: str):
-    df_subset = data[subset]
+def scree_plot(data_scaled, subset: list, subset_name: str):
+    df_subset = data_scaled[subset]
     pca = PCA(n_components=len(df_subset.columns))
     principal_components = pca.fit_transform(df_subset)
 
@@ -109,8 +109,8 @@ def PC2_plot_biplot(data,data_scaled,subset: list,subsetname: str,compare: str )
 
 
 # %% ../nbs/300_anthro_pca.ipynb 11
-def loadings_function(data, subset: list):
-    ansur = data.copy()
+def loadings_function(data_scaled, subset: list):
+    ansur = data_scaled.copy()
     df_subset = ansur[subset]
     
     #Gives the PCA for all the measurments in the subset for the data
@@ -122,8 +122,8 @@ def loadings_function(data, subset: list):
     return df_loadings_subset
 
 # %% ../nbs/300_anthro_pca.ipynb 13
-def plot_loadings(data,subset: list,subsetname:str, number:int):
-    df_loadings = loadings_function(data,subset)
+def plot_loadings(data_scaled,subset: list,subsetname:str, number:int):
+    df_loadings = loadings_function(data_scaled,subset)
     df_loadings_val=df_loadings.T
 
     top_10_values = df_loadings_val.nlargest(10, f'PC{number}')
@@ -137,7 +137,7 @@ def plot_loadings(data,subset: list,subsetname:str, number:int):
     plt.show()
 
 
-# %% ../nbs/300_anthro_pca.ipynb 14
+# %% ../nbs/300_anthro_pca.ipynb 15
 def loadings_table(data, subset: list, subsetname: str, number: int):
     df_loadings = loadings_function(data, subset)
     df_loadings_val = df_loadings.T
