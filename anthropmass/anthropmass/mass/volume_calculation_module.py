@@ -35,14 +35,11 @@ def get_volumes(Ansur, inputheight):
     vUA = (1/3) * np.pi * m["h8"] * (m["r1"]**2 + m["r2"]**2 + m["r1"] * m["r2"])
 
     # Hand (closed fist) volume (estimated as ellipsoid)
-    vH = (4 / 3) * np.pi * (m["h9"]) * m["b7"]*m["r7"]
+    vH = (4 / 3) * np.pi * (m["h9"]) * m["b7"]**2
 
 
-    # Head volume (not used in 2D plot)
+    # Head volume 
     vHe = (4/3) * np.pi * (m["a7"]**2) * m["b8"]
-
-    # Head2 volume (This is used to get a more accurate weight estimation for the head-neck part, is not visually represented)
-    vHe2 = (4/3) * np.pi * ((m["a7"]+(m["a8"]/2))**2) * m["b8"]
 
     # Lower arm volume
     vLA = (1/3) * np.pi * m["h10"] * (m["r3"]**2 + m["r4"]**2 + m["r3"] * m["r4"])
@@ -65,7 +62,7 @@ def get_volumes(Ansur, inputheight):
         "vLA": vLA,
     }
     # Total volume (using your provided formula)
-    vTOT = vHe2 + vUT + vMT + vLT + 2 * (vUA + vLA + vH + vT + vS + vF) #Here we use vHe2 instead of vHe + vN since the Modified hanvan model is intended to be used this way
+    vTOT = vHe+ vN + vUT + vMT + vLT + 2 * (vUA + vLA + vH + vT + vS + vF) #Here we use vHe2 instead of vHe + vN since the Modified hanvan model is intended to be used this way
     volumes["vTOT"] = vTOT
     return volumes
 
