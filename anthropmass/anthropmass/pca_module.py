@@ -19,11 +19,9 @@ def scree_plot(data, subset: list, subset_name: str):
     per_var = np.round(pca.explained_variance_ratio_ * 100, decimals=1)
     labels = ['PC' + str(x) for x in range(1, len(per_var) + 1)]
 
-    # Print explained variance
     df_per_var = pd.DataFrame(data=per_var).T
     df_per_var.columns = labels
 
-    # Find number of PCs that explain at least 95%
     total = 0
     for i in range(len(per_var)):
         total += per_var[i]
@@ -32,14 +30,13 @@ def scree_plot(data, subset: list, subset_name: str):
             break
 
 
-    # Scree plot with line following the bars
     bars_to_plot = min(10, len(per_var))
     x_vals = list(range(1, bars_to_plot + 1))
     y_vals = per_var[:bars_to_plot]
 
     plt.figure(figsize=(8, 6))
     plt.bar(x_vals, y_vals, tick_label=labels[:bars_to_plot], alpha=0.8, color='skyblue')
-    plt.plot(x_vals, y_vals,  linestyle='--',color='darkblue', linewidth=2)  # This is the line that "follows" the bars
+    plt.plot(x_vals, y_vals,  linestyle='--',color='darkblue', linewidth=2)  
 
     plt.ylabel('Percentage of Explained Variance',fontsize=16)
     plt.xlabel('Principal Component',fontsize=16)
@@ -51,13 +48,12 @@ def scree_plot(data, subset: list, subset_name: str):
 
 
 # %% ../nbs/300_anthro_pca.ipynb 8
-def PC2_plot_biplot(data,data_scaled,subset: list,subsetname: str,compare: str, ax = None ): #
+def PC2_plot_biplot(data,data_scaled,subset: list,subsetname: str,compare: str ): 
    
     ansur = data
     ansur_c=ansur.copy()
     df_subset = data_scaled[subset]
  
-    # PCA with n components
     pca = PCA(n_components=len(df_subset.keys()))
     X_pca = pca.fit_transform(df_subset) # fit: Calculates PCA based on df_subset, transform --> making the new PC-axis 
     
@@ -99,8 +95,8 @@ def PC2_plot_biplot(data,data_scaled,subset: list,subsetname: str,compare: str, 
 
         
     for name in top_10.index:
-        x = df_loadings_val.loc[name, 'PC1'] * scale #0.006
-        y = df_loadings_val.loc[name, 'PC2'] * scale #0.006
+        x = df_loadings_val.loc[name, 'PC1'] * scale 
+        y = df_loadings_val.loc[name, 'PC2'] * scale 
         plt.arrow(0, 0, x, y, color='red', alpha=0.7, width=arrow_with)
         plt.text(x + 0.0002, y, name, color='red', fontsize=13)
             
