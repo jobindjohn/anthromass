@@ -4,32 +4,23 @@
 __all__ = ['main']
 
 # %% ../../nbs/600_mass.ipynb 3
-from .com_calculation_module import*
+from .com_calculation_module import *
 from .com_calculation_module import *
 from .volume_calculation_module import *
 from .plot_body_module import *
 from .inertial_calc_module import *
 from .massclauser_module import *
 from .measurements_heights_module import get_measurements, get_heights
+import pandas as pd
 
 
-# %% ../../nbs/600_mass.ipynb 4
+
+# %% ../../nbs/600_mass.ipynb 5
 def main(Ansur, inputweight, inputheight, gender):
     
-    
-    import pandas as pd
-    # Define the Ansur data array
-    #Ansur = [10027, 266, 1467, 337, 222, 1347, 253, 202, 401, 369, 274, 493, 71, 319, 291, 142,
-    #         979, 240, 882, 619, 509, 373, 1535, 291, 1074, 259, 1292, 877, 607, 351, 36, 71, 19,
-     #        247, 802, 101, 273, 349, 299, 575, 477, 1136, 90, 214, 193, 150, 583, 206, 326, 70,
-      #       332, 366, 1071, 685, 422, 441, 502, 560, 500, 77, 391, 118, 400, 436, 1447, 113, 437,
-       ##     919, 1700, 501, 329, 933, 240, 440, 1054, 815, 175, 853, 'Male', '4-Oct-10', 'Fort Hood',
-         #    'Regular Army', 'Combat Arms', '19D', 'North Dakota', 1, 1, 41, 71, 180, 'Right hand']
 
-    # Compute measurements, heights, volumes, and COM points
-    measurements = get_measurements(Ansur, inputheight)
-    heights = get_heights(Ansur, inputheight)
-    volumes = get_volumes(Ansur, inputheight)
+    #Gathers librarys from other function
+    heights = get_heights(Ansur, inputheight).iloc[0]
     pointsJC, com = get_joint_and_com_points(Ansur, inputheight, gender)
     weights = clauser(Ansur.iloc[0], inputweight, inputheight)
     weightsZat = zatsiorsky(inputweight, inputheight)
@@ -40,59 +31,39 @@ def main(Ansur, inputweight, inputheight, gender):
 
 
 
-      # Limb segments
-    densities = {
-      "densHand":      weights["mH"]   / volumes["vH"],
-      "densForearm":   weights["mLA"]  / volumes["vLA"],
-      "densUpperArm":  weights["mUA"]  / volumes["vUA"],
-      "densFoot":      weights["mF"]   / volumes["vF"],
-      "densShank":     weights["mS"]   / volumes["vS"],
-      "densThigh":     weights["mTh"]  / volumes["vT"],
-      "densHead":      weights["mHe"]  / volumes["vHe"],
-      "densTrunk":     weights["mTr"]  / (volumes["vUT"] + volumes["vMT"] + volumes["vLT"]),
-      "densBodyTotal": weights["mTOT"] / volumes["vTOT"]
-     }
 
 
-    heights = heights.iloc[0]
+    print(".......................................................")
 
-
-
-    #Calculate weight from regression model:
-
-
-    # Print results from volume estimation
-
-
-    
+    #Prints information about height and total estimated weight
     print("RESULTS:")
-
-    #print("Actual Weight (kg):", inputweight)
-    # Actual height is given in the Ansur list (index 75) in meters
-    actual_height = inputheight
     print("Estimated Height (m):", heights["TotalH"])
-    # or another computed value
-    print("Actual Height (m):", actual_height/1000)
-
+    print("Actual Height (m):", inputheight/1000)
     print("Total Estimated Weight (kg) using Clauser regression model",weights['mTOT'] )
     print("Total Estimated Weight (kg) using Zatriosky regression model",weightsZat['mTOTzat'] )
 
 
 
+
+    print(".......................................................")
+
+
+
+
+    #Prints the COM positions and aranges in dataframe
     segments = [
         'Head', 'Upper Trunk', 'Middle Trunk', 'Lower Trunk', 'Upper Arm',
         'Lower Arm', 'Hand', 'Thigh', 'Shank', 'Foot'
     ]
 
-    # Updated coordinate frame:
-    # X = Width (set to 0 as placeholder), Y = Depth (from original x), Z = Height (from original y)
+    #Please note: COM positions are stored like 2D coordinates (y, z). Since all of them (exept foot) are placed on (x = 0) 
+    #Ex: com("U(Upper)T(Trunk)M(Mass)C(Center)")[0] gives y coordinate for upper trunk
     positions_df = pd.DataFrame(index=['X', 'Y', 'Z'], columns=segments)
 
     positions_df.loc[:, 'Head'] = [0, round(com['HeMC'][0], 3), round(com['HeMC'][1], 3)]
     positions_df.loc[:, 'Upper Trunk'] = [0, round(com['UTMC'][0], 3), round(com['UTMC'][1], 3)]
     positions_df.loc[:, 'Middle Trunk'] = [0, round(com['MTMC'][0], 3), round(com['MTMC'][1], 3)]
     positions_df.loc[:, 'Lower Trunk'] = [0, round(com['LTMC'][0], 3), round(com['LTMC'][1], 3)]
-
     positions_df.loc[:, 'Upper Arm'] = [0, round(com['RUAMC'][0], 3), round(com['RUAMC'][1], 3)]
     positions_df.loc[:, 'Lower Arm'] = [0, round(com['RLAMC'][0], 3), round(com['RLAMC'][1], 3)]
     positions_df.loc[:, 'Hand'] = [0, round(com['RHMC'][0], 3), round(com['RHMC'][1], 3)]
@@ -103,16 +74,22 @@ def main(Ansur, inputweight, inputheight, gender):
     print("\nPositions of Body Segments (Custom Cartesian Mapping)\n")
     print(positions_df.to_string())
 
-    # Keep only the joint names without the "Right" prefix
+
+    print(".......................................................")
+
+
+    #Prints the joint center positions and aranges in dataframe
+    #Please note: joint positions are stored like 2D coordinates (y, z). Since all of them are placed on (x = 0) 
+
     joints = ["Shoulder", "Elbow", "Wrist", "Hip", "Knee", "Ankle"]
 
-    # Create the DataFrame
+    #Create the DataFrame
     jc_positions_df = pd.DataFrame(index=['X', 'Y', 'Z'], columns=joints)
 
-    # Fill the table with absolute Y values (Depth)
+    #Fill the table with absolute Y values 
     for joint in joints:
         coords = pointsJC[joint]
-        y_depth = round(abs(coords[0]), 3)   # take absolute value of Y (depth)
+        y_depth = round(abs(coords[0]), 3)   # take absolute value of Y (distance from centerline)
         z_height = round(coords[1], 3)
         jc_positions_df.loc[:, joint] = [0, y_depth, z_height]
 
@@ -121,9 +98,17 @@ def main(Ansur, inputweight, inputheight, gender):
     print(jc_positions_df.to_string())
 
 
-    print("...................")
+    print(".......................................................")
 
-    # Mass segments with full trunk detail
+
+
+
+
+
+
+    #Print masses from clausers estimation of mass
+    #This only useses one segment for trunk
+    #Segment masses correspond to 2D and 3D visualisation
     mass_segments = [
         "Head", "Trunk Total", "Upper Trunk", "Middle Trunk", "Lower Trunk",
         "Upper Arm", "Forearm", "Hand", "Thigh", "Shank", "Foot"
@@ -145,6 +130,16 @@ def main(Ansur, inputweight, inputheight, gender):
     mass_df.loc["Clauser", "Shank"] = round(weights["mS"], 3)
     mass_df.loc["Clauser", "Foot"] = round(weights["mF"], 3)
 
+
+
+
+
+
+
+
+    #Print masses from zatsiorsky estimation of mass
+    #This useses 3 segments for trunk
+    #Segment masses DOES NOT correspond to 2D and 3D visualisation
     # --- Zatsiorsky Values ---
     trunk_total_zat = (
         weightsZat["mUppTrzat"] +
@@ -171,11 +166,7 @@ def main(Ansur, inputweight, inputheight, gender):
 
 
 
-#INERTIA:
-
-
-
-
+#Prints moments of inertia:
     print(f"{'Upper Trunk':<12} {inertia['Ixx_UT']:>12.4f} {inertia['Iyy_UT']:>12.4f} {inertia['Izz_UT']:>12.4f}")
     print(f"{'Middle Trunk':<12} {inertia['Ixx_MT']:>12.4f} {inertia['Iyy_MT']:>12.4f} {inertia['Izz_MT']:>12.4f}")
     print(f"{'Lower Trunk':<12} {inertia['Ixx_LT']:>12.4f} {inertia['Iyy_LT']:>12.4f} {inertia['Izz_LT']:>12.4f}")
@@ -188,27 +179,6 @@ def main(Ansur, inputweight, inputheight, gender):
     print(f"{'Lower Arm':<12} {inertia['Ixx_LA']:>12.4f} {inertia['Iyy_LA']:>12.4f} {inertia['Izz_LA']:>12.4f}")
     print(f"{'Hand':<12} {inertia['Ixx_Ha']:>12.4f} {inertia['Iyy_Ha']:>12.4f} {inertia['Izz_Ha']:>12.4f}")
     print(f"{'Head':<12} {inertia['Ixx_H']:>12.4f} {inertia['Iyy_H']:>12.4f} {inertia['Izz_H']:>12.4f}")
-
-
-    print(inertia)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

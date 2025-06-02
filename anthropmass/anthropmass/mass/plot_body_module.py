@@ -17,7 +17,7 @@ from matplotlib.patches import Ellipse, Polygon
 from .measurements_heights_module import *
 from .com_calculation_module import *
 
-# %% ../../nbs/640_mass_plot_body.ipynb 3
+# %% ../../nbs/640_mass_plot_body.ipynb 4
 def plot_body(Ansur, inputheight, gender):
     """
     Draws a front-view plot of the body segments with COM points.
@@ -25,11 +25,15 @@ def plot_body(Ansur, inputheight, gender):
     m = get_measurements(Ansur, inputheight)
     heights = get_heights(Ansur, inputheight)
     pointsJC, com = get_joint_and_com_points(Ansur, inputheight, gender)
-
     m = m.iloc[0]
     heights = heights.iloc[0]
     #com = com.iloc[0]
-    # Extract variables for drawing
+
+
+
+
+
+    # Defines dimensions for drawing
     r1 = m["r1"]
     r2 = m["r2"]
     r3 = m["r3"]
@@ -98,35 +102,7 @@ def plot_body(Ansur, inputheight, gender):
     }
 
 
-    ShoulderOFF = m["ShoulderJC"]*(-0.10117)
-    ElbowOFF = m["ElbowJC"]*(-0.04194)
-    WristOFF = m["WristJC"]*(-0.00597)
-    HipOFF = m["HipJC"]*(0.00706)
-    KneeOFF = m["KneeJC"]*(0.00739)
-    AnkleOFF = m["AnkleJC"]*(-0.03203)
-    Hip_hor = HipW-0.085*m["trochanterion-lateralmalleolusheight"]
 
-    MidLeg = HipW - r1thigh
-
-    #Joint Centers
-    LeftShoulder = [-ShoulderW, m["ShoulderH"]+ShoulderOFF]
-    RightShoulder = [ShoulderW, m["ShoulderH"]+ShoulderOFF]
-
-
-    LeftElbow = [-ShoulderW, m["ElbowH"]+ElbowOFF]
-    RightElbow = [ShoulderW, m["ElbowH"]+ElbowOFF] 
-
-    LeftWrist = [-ShoulderW, m["WristH"]]
-    RightWrist = [ShoulderW, m["WristH"]]
-
-    LeftHip = [-Hip_hor, m["HipH"]+HipOFF]
-    RightHip = [Hip_hor, m["HipH"]+HipOFF]
-
-    LeftKnee = [-MidLeg, m["KneeH"]+KneeOFF] 
-    RightKnee = [MidLeg, m["KneeH"]+KneeOFF]
-
-    LeftAnkle = [-MidLeg, m["AnkleH"]+AnkleOFF]
-    RightAnkle = [MidLeg, m["AnkleH"]+AnkleOFF]
 
 
     
@@ -135,12 +111,7 @@ def plot_body(Ansur, inputheight, gender):
 
 
 
-
-
-
-
-
-
+    #PLOTTING STARTS HERE
 
 
     # Create figure
@@ -318,7 +289,6 @@ def plot_body(Ansur, inputheight, gender):
     ]
     ax.add_patch(Polygon(right_upperarm_coords, closed=True, fill=False, edgecolor='red'))
 
-    ULdelta = (r1 - m["r3"])  # Distance between upper and lower arm centers
 
     # Left Lower Arm (Rectangle)
     left_lowerarm_coords = [
@@ -378,8 +348,8 @@ def plot_body(Ansur, inputheight, gender):
     ax.axhline(0, color='black')
     #ax.axvline(0, color='black')
     ax.set_title("Body Segments with Center of Mass (Front view)")
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
+    ax.set_xlabel("y")
+    ax.set_ylabel("z")
     ax.set_xlim(-1.25, 1.25)
     ax.set_ylim(0, 2.5)
     ax.set_aspect('equal')
