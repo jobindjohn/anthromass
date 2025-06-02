@@ -8,7 +8,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 # %% ../nbs/100_data.ipynb 5
-def normalize(data:dict, measurement:str):
+def normalize(data:pd.DataFrame, measurement:str):
     ansur=pd.read_csv('../data/processed/ANSURIImalefemale.csv')
     avg_m = ansur[measurement].mean()
     std_m = ansur[measurement].std()
@@ -16,7 +16,7 @@ def normalize(data:dict, measurement:str):
     return data
 
 # %% ../nbs/100_data.ipynb 7
-def normalize_all(data:dict, measurement:list):
+def normalize_all(data:pd.DataFrame, measurement:list):
     for m in measurement:
         data = normalize(data, m)
     return data
@@ -30,7 +30,7 @@ def minus_mean(data:pd.DataFrame, measurement:list):
         datacopy[m] = datacopy[m].astype(float) - avg_m
     return datacopy
 
-# %% ../nbs/100_data.ipynb 16
-def make_train_test(data:dict, test_size:float):
+# %% ../nbs/100_data.ipynb 15
+def make_train_test(data:pd.DataFrame, test_size:float):
     train, test = train_test_split(data, test_size=test_size, shuffle=True, random_state=42)
     return train, test
