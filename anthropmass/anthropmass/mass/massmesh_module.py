@@ -2,7 +2,7 @@
 
 # %% auto 0
 __all__ = ['Ansur', 'subject', 'create_truncated_cone', 'create_elliptical_frustum_solid', 'create_elliptical_cylinder',
-           'mirror_mesh', 'rotate_hand_mesh', 'rotate_foot_mesh', 'shift_to_bottom', 'generate_all_meshes',
+           'mirror_mesh', 'rotate_hand_mesh', 'rotate_foot_mesh', 'center_mesh', 'generate_all_meshes',
            'preview_current_colored_geometry']
 
 # %% ../../nbs/650_mass_generate_meshes.ipynb 2
@@ -22,203 +22,145 @@ from .measurements_heights_module import *
 
 # %% ../../nbs/650_mass_generate_meshes.ipynb 3
 # === HELPERS ===
+# ---------------------------------------------------------------------
+# 650_mass_generate_meshes.py   —  DROP-IN REPLACEMENT FOR THE FUNCTION
+# ---------------------------------------------------------------------
+
+
+
+# ── helpers (unchanged) ───────────────────────────────────────────────
 def create_truncated_cone(radius_top, radius_bottom, height, sections=32):
-    angles = np.linspace(0, 2 * np.pi, sections, endpoint=False)
-    top = np.stack([radius_top * np.cos(angles),
-                    radius_top * np.sin(angles),
-                    np.full_like(angles,  height / 2)], axis=1)
-    bottom = np.stack([radius_bottom * np.cos(angles),
-                       radius_bottom * np.sin(angles),
-                       np.full_like(angles, -height / 2)], axis=1)
-    vertices = np.vstack([top, bottom])
-    faces = []
+    angles  = np.linspace(0, 2*np.pi, sections, endpoint=False)
+    top     = np.c_[radius_top*np.cos(angles),
+                    radius_top*np.sin(angles),
+                    np.full_like(angles,  height/2)]
+    bottom  = np.c_[radius_bottom*np.cos(angles),
+                    radius_bottom*np.sin(angles),
+                    np.full_like(angles, -height/2)]
+    verts   = np.vstack([top, bottom])
+    faces   = []
     for i in range(sections):
-        a, b = i, (i + 1) % sections
-        c, d = i + sections, (i + 1) % sections + sections
-        faces.append([a, b, c])
-        faces.append([b, d, c])
-    top_center, bottom_center = len(vertices), len(vertices) + 1
-    vertices = np.vstack([vertices, [[0, 0, height / 2],
-                                     [0, 0, -height / 2]]])
+        a, b     = i, (i+1) % sections
+        c, d     = i+sections, (i+1) % sections + sections
+        faces   += [[a, b, c], [b, d, c]]
+    # cap
+    verts  = np.vstack([verts, [[0,0, height/2],[0,0,-height/2]]])
+    top_c  = len(verts)-2; bot_c = len(verts)-1
     for i in range(sections):
-        next_i = (i + 1) % sections
-        faces.append([i, next_i, top_center])
-        faces.append([next_i + sections, i + sections, bottom_center])
-    return trimesh.Trimesh(vertices=vertices, faces=faces, process=True)
+        nxt = (i+1) % sections
+        faces += [[i, nxt, top_c], [nxt+sections, i+sections, bot_c]]
+    return trimesh.Trimesh(vertices=verts, faces=faces, process=True)
 
-def create_elliptical_frustum_solid(a_top, b_top, a_bot, b_bot, height, n=32):
-    angles = np.linspace(0, 2 * np.pi, n, endpoint=False)
-    top = np.stack([a_top * np.cos(angles),
-                    b_top * np.sin(angles),
-                    np.full_like(angles,  height / 2)], axis=1)
-    bottom = np.stack([a_bot * np.cos(angles),
-                       b_bot * np.sin(angles),
-                       np.full_like(angles, -height / 2)], axis=1)
-    vertices = np.vstack([top, bottom])
-    faces = []
+def create_elliptical_frustum_solid(a_top,b_top,a_bot,b_bot,h,n=32):
+    angles = np.linspace(0, 2*np.pi, n, endpoint=False)
+    top    = np.c_[a_top*np.cos(angles), b_top*np.sin(angles), np.full_like(angles,  h/2)]
+    bot    = np.c_[a_bot*np.cos(angles), b_bot*np.sin(angles), np.full_like(angles, -h/2)]
+    verts  = np.vstack([top, bot])
+    faces  = []
     for i in range(n):
-        a, b = i, (i + 1) % n
-        c, d = i + n, (i + 1) % n + n
-        faces.append([a, b, c])
-        faces.append([b, d, c])
-    top_center, bottom_center = len(vertices), len(vertices) + 1
-    vertices = np.vstack([vertices, [[0, 0, height / 2],
-                                     [0, 0, -height / 2]]])
+        a,b  = i,(i+1)%n
+        c,d  = i+n,(i+1)%n+n
+        faces += [[a,b,c],[b,d,c]]
+    verts  = np.vstack([verts, [[0,0,h/2],[0,0,-h/2]]])
+    top_c  = len(verts)-2; bot_c=len(verts)-1
     for i in range(n):
-        next_i = (i + 1) % n
-        faces.append([i, next_i, top_center])
-        faces.append([next_i + n, i + n, bottom_center])
-    return trimesh.Trimesh(vertices=vertices, faces=faces, process=True)
+        nxt  = (i+1)%n
+        faces += [[i,nxt,top_c],[nxt+n,i+n,bot_c]]
+    return trimesh.Trimesh(vertices=verts, faces=faces, process=True)
 
-def create_elliptical_cylinder(a, b, height, sections=32):
-    angles = np.linspace(0, 2 * np.pi, sections, endpoint=False)
-    top = np.stack([a * np.cos(angles),
-                    b * np.sin(angles),
-                    np.full_like(angles,  height / 2)], axis=1)
-    bottom = np.stack([a * np.cos(angles),
-                       b * np.sin(angles),
-                       np.full_like(angles, -height / 2)], axis=1)
-    vertices = np.vstack([top, bottom])
-    faces = []
-    for i in range(sections):
-        a_idx, b_idx = i, (i + 1) % sections
-        c_idx, d_idx = i + sections, (i + 1) % sections + sections
-        faces.append([a_idx, b_idx, c_idx])
-        faces.append([b_idx, d_idx, c_idx])
-    top_center, bottom_center = len(vertices), len(vertices) + 1
-    vertices = np.vstack([vertices, [[0, 0, height / 2],
-                                     [0, 0, -height / 2]]])
-    for i in range(sections):
-        next_i = (i + 1) % sections
-        faces.append([i, next_i, top_center])
-        faces.append([next_i + sections, i + sections, bottom_center])
-    return trimesh.Trimesh(vertices=vertices, faces=faces, process=True)
+def create_elliptical_cylinder(a,b,h,sections=32):
+    return create_elliptical_frustum_solid(a,b,a,b,h,sections)
 
 def mirror_mesh(mesh):
-    m = mesh.copy()
-    m.apply_scale([-1, 1, 1])
-    return m
+    m = mesh.copy(); m.apply_scale([-1,1,1]); return m
 
 def rotate_hand_mesh(mesh):
-    rot_z = trimesh.transformations.rotation_matrix(
-        np.pi/2, [0,0,1], point=[0,0,0])
-    mesh.apply_transform(rot_z)
-    return mesh
+    rot_z = trimesh.transformations.rotation_matrix(np.pi/2,[0,0,1])
+    mesh.apply_transform(rot_z); return mesh
 
 def rotate_foot_mesh(mesh):
-    rot_x = trimesh.transformations.rotation_matrix(
-        np.pi/2, [-1,0,0], point=[0,0,0])
-    rot_z = trimesh.transformations.rotation_matrix(
-        np.pi/2, [0,0,1], point=[0,0,0])
-    mesh.apply_transform(rot_x)
-    mesh.apply_transform(rot_z)
-    return mesh
+    rot_x = trimesh.transformations.rotation_matrix(np.pi/2,[-1,0,0])
+    rot_z = trimesh.transformations.rotation_matrix(np.pi/2,[0,0,1])
+    mesh.apply_transform(rot_x); mesh.apply_transform(rot_z); return mesh
 
-def shift_to_bottom(mesh):
-    min_z = mesh.bounds[0][2]
-    mesh.apply_translation([0,0,-min_z])
-    return mesh
+def center_mesh(mesh):
+    zmin,zmax = mesh.bounds[:,2]
+    mesh.apply_translation([0,0,-(zmin+zmax)/2]); return mesh
+# ──────────────────────────────────────────────────────────────────────
 
-# === MAIN MESH GENERATION ===
+
 def generate_all_meshes(Ansur, inputheight):
-    # if Ansur already *is* the measurements table:
-    if 'a1' in Ansur.columns:
-        measurements = Ansur.iloc[0]
-    else:
-        measurements = get_measurements(Ansur, inputheight).iloc[0]
+    """
+    Build every body-segment mesh **centred at the origin**.
+    The URDF will later position them, so we do *no* height
+    translations here.
+    """
+    # ── 1. measurements ------------------------------------------------
+    if "a1" in Ansur.columns:            # already processed row
+        meas = Ansur.iloc[0]
+    else:                                # raw ANSUR record
+        meas = get_measurements(Ansur, inputheight).iloc[0]
 
+    out_dir = os.path.join(os.path.dirname(__file__), "model_output")
+    os.makedirs(out_dir, exist_ok=True)
 
-    script_dir = os.getcwd()
-
-    output_dir = os.path.join(script_dir, "model_output")
-    os.makedirs(output_dir, exist_ok=True)
-
-
-    # --- torso ---
-    torso_parts = {
-        "torso_top": create_elliptical_cylinder(
-            measurements["a1"], measurements["b1"], measurements["h1"]
-        ),
-        "torso_mid": create_elliptical_frustum_solid(
-            measurements["a2"], measurements["b2"],
-            measurements["a3"], measurements["b3"],
-            measurements["h2"]
-        ),
-        "torso_bottom": create_elliptical_cylinder(
-            measurements["a4"], measurements["b4"], measurements["h3"]
-        ),
-        "neck": cylinder(
-            radius=measurements["a9"],
-            height=measurements["a8"],
-            sections=32
-        )
-    }
-
-    for name, mesh in torso_parts.items():
-        if name == "neck":
-            mesh.apply_translation([0, 0, -measurements["a8"]/2])
-        else:
-            mesh = shift_to_bottom(mesh)
-            mesh.apply_transform(
-                trimesh.transformations.rotation_matrix(np.pi/2, [0,0,1])
-            )
+    def save(mesh,name):
         mesh.fix_normals()
-        mesh.export(os.path.join(output_dir, f"{name}.stl"))
+        mesh.export(os.path.join(out_dir,f"{name}.stl"))
 
-    # --- head ---
-    head = trimesh.primitives.Sphere(radius=1.0).to_mesh()
-    head.apply_transform(
-        np.diag([measurements["b8"], measurements["b8"], measurements["a7"], 1])
-    )
-    head = shift_to_bottom(head)
-    head.fix_normals()
-    head.export(os.path.join(output_dir, "head.stl"))
+    # ── 2. torso + neck -----------------------------------------------
+    torso = {
+        "torso_top":    create_elliptical_cylinder(meas["a1"], meas["b1"], meas["h1"]),
+        "torso_mid":    create_elliptical_frustum_solid(meas["a2"],meas["b2"],
+                                                        meas["a3"],meas["b3"],meas["h2"]),
+        "torso_bottom": create_elliptical_cylinder(meas["a4"], meas["b4"], meas["h3"]),
+        "neck":         cylinder(radius=meas["a9"], height=meas["a8"], sections=32),
+    }
+    for name,mesh in torso.items():
+        save(center_mesh(mesh), name)
 
-    # --- limbs ---
+    # ── 3. head --------------------------------------------------------
+    head = trimesh.primitives.Sphere(radius=1).to_mesh()
+    head.apply_transform(np.diag([meas["b8"],meas["b8"],meas["a7"],1]))
+    save(center_mesh(head), "head")
+
+    # ── 4. limbs -------------------------------------------------------
     limbs = {
-        "upper_arm": ("trunc_cone", (measurements["r1"], measurements["r2"], measurements["h8"])),
-        "forearm": ("trunc_cone", (measurements["r3"], measurements["r4"], measurements["h10"])),
-        "upper_leg": ("trunc_cone", (measurements["r1thigh"], measurements["r2thigh"], measurements["h4"])),
-        "lower_leg": ("trunc_cone", (measurements["r1shank"], measurements["r2shank"], measurements["h6"])),
-        "foot": ("elliptical_frustum", (measurements["b5"], measurements["a5"], measurements["a6"], measurements["b6"], measurements["h7"])),
-        "hand": ("ellipsoid", [measurements["r7"], measurements["b7"], measurements["h9"]]),
+        "upper_arm": ("trunc", (meas["r1"],        meas["r2"],        meas["h8"])),
+        "forearm":   ("trunc", (meas["r3"],        meas["r4"],        meas["h10"])),
+        "upper_leg": ("trunc", (meas["r1thigh"],   meas["r2thigh"],   meas["h4"])),
+        "lower_leg": ("trunc", (meas["r1shank"],   meas["r2shank"],   meas["h6"])),
+        "hand":      ("ellip", [meas["r7"],        meas["b7"],        meas["h9"]]),
+        "foot":      ("frust",( meas["b5"],        meas["a5"],
+                                meas["a6"],        meas["b6"],        meas["h7"])),
     }
 
-    for base_name, (shape, dims) in limbs.items():
-        for side in ["left","right"]:
-            if shape == "ellipsoid":
-                m = trimesh.primitives.Sphere(radius=1.0).to_mesh()
-                m.apply_transform(np.diag(dims + [1]))
-            elif shape == "trunc_cone":
-                rt, rb, h = dims
-                m = create_truncated_cone(rt, rb, h)
-                m.apply_translation([0,0,-h/2])
-            else:  # elliptical_frustum
-                at, bt, ab, bb, h = dims
-                m = create_elliptical_frustum_solid(at, bt, ab, bb, h)
+    for part,(kind,dims) in limbs.items():
+        for side in ("left","right"):
+            # build base geometry
+            if   kind=="trunc":
+                rt,rb,h = dims; m = create_truncated_cone(rt,rb,h)
+            elif kind=="ellip":
+                m = trimesh.primitives.Sphere(radius=1).to_mesh()
+                m.apply_transform(np.diag(dims+[1]))
+            else:                       # foot
+                at,bt,ab,bb,h = dims
+                m = create_elliptical_frustum_solid(at,bt,ab,bb,h)
 
-            if base_name == "hand":
-                m = rotate_hand_mesh(m)
-            elif base_name == "foot":
-                m = rotate_foot_mesh(m)
+            # rotations
+            if   part=="hand": m = rotate_hand_mesh(m)
+            elif part=="foot": m = rotate_foot_mesh(m)
 
-            m = shift_to_bottom(m)
+            m = center_mesh(m)          # final centre
+            if side=="right": m = mirror_mesh(m)
+            save(m, f"{part}_{side}")
 
-            if side == "right":
-                m = mirror_mesh(m)
+    print(f"✅ Meshes exported to {out_dir}")
 
-            if base_name == "foot":
-                angle = np.deg2rad(-90)
-                rot = trimesh.transformations.rotation_matrix(
-                    angle if side=="left" else -angle,
-                    [0,0,1]
-                )
-                m.apply_transform(rot)
 
-            m.fix_normals()
-            m.export(os.path.join(output_dir, f"{base_name}_{side}.stl"))
 
-    print(f"✅ Meshes successfully saved to: {output_dir}")
+
+
 
 
 
@@ -275,8 +217,7 @@ def preview_current_colored_geometry(Ansur, inputheight):
 
     for name, (mesh, color) in torso_parts.items():
         mesh.visual = ColorVisuals(mesh, face_colors=color)
-        if name == "neck":
-            mesh.apply_translation([0, 0, -neck_height / 2])
+   
         mesh.apply_translation([x_offset, 0, 0])
         scene.add_geometry(mesh, node_name=name)
         x_offset += 0.6

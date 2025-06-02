@@ -12,128 +12,370 @@ from .measurements_heights_module import *
 
 # %% ../../nbs/660_mass_generate_urdf.ipynb 3
 # === URDF Generation ===
-def create_urdf(Ansur, inputheight):
-    # if this is still raw ANSUR data, compute measurements/heights
-    if 'a1' not in Ansur.columns:
+
+# === URDF Generation (absolute-centre version) ===
+# === URDF Generation (absolute-centre version) ===
+# ---------------------------------------------------------------------
+# massurdf_module.py   –  replace the old create_urdf with this one
+# ---------------------------------------------------------------------
+# ──────────────────────────────────────────────────────────────
+#  massurdf_module.py  –  create_urdf (absolute-centre, shoulders fixed)
+# ──────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────
+#  massurdf_module.py  –  create_urdf (shoulders swung out)
+# ──────────────────────────────────────────────────────────────
+
+
+#last working:
+def create_urdf(Ansur, inputheight): 
+
+    # 1. measurements & heights ---------------------------------
+    if "a1" not in Ansur.columns:
         measurements = get_measurements(Ansur, inputheight).iloc[0]
-        heights      = get_heights(Ansur, inputheight).iloc[0]
+        heights_df   = get_heights(Ansur, inputheight)
     else:
         measurements = Ansur.iloc[0]
-        heights      = get_heights(Ansur, inputheight).iloc[0]
+        heights_df   = get_heights(Ansur, inputheight)
 
-    # joint definitions: name → (type, axis, has_limit)
+    heights = heights_df.iloc[0]
+
+    # 2. helpers -------------------------------------------------
+    # everything is revolute about Z with ±90° limits
     movable = {
-        # elbows
-        "upper_arm_left_to_forearm":  ("revolute", (0,0,1), True),
-        "upper_arm_right_to_forearm": ("revolute", (0,0,1), True),
-        # knees
-        "upper_leg_left_to_lower_leg":  ("revolute", (0,0,1), True),
-        "upper_leg_right_to_lower_leg": ("revolute", (0,0,1), True),
+        "torso_bottom_to_mid"        : ("revolute", (0,0,1), True),
+        "torso_mid_to_top"           : ("revolute", (0,0,1), True),
+        "torso_top_to_neck"          : ("revolute", (0,0,1), True),
+        "neck_to_head"               : ("revolute", (0,0,1), True),
+
+        "torso_mid_to_upper_arm_left": ("revolute", (0,0,1), True),
+        "upper_arm_left_to_forearm"  : ("revolute", (0,0,1), True),
+        "upper_arm_left_to_forearm"  : ("revolute", (0,1,0), True),
+        "upper_arm_left_to_forearm"  : ("revolute", (1,0,0), True),
+        "forearm_to_hand"            : ("revolute", (0,0,1), True),
+
+        "torso_mid_to_upper_arm_right": ("revolute", (0,0,1), True),
+        "upper_arm_right_to_forearm"  : ("revolute", (0,0,1), True),
+        "forearm_to_hand_right"       : ("revolute", (0,0,1), True),
+
+        "torso_bottom_to_upper_leg_left": ("revolute", (0,0,1), True),
+        "upper_leg_left_to_lower_leg"   : ("revolute", (0,0,1), True),
+        "lower_leg_left_to_foot"        : ("revolute", (0,0,1), True),
+
+        "torso_bottom_to_upper_leg_right": ("revolute", (0,0,1), True),
+        "upper_leg_right_to_lower_leg"   : ("revolute", (0,0,1), True),
+        "lower_leg_right_to_foot"        : ("revolute", (0,0,1), True),
     }
 
-    def link_block(name):
-        return f'''
+
+    def link_block(name: str) -> str:
+        return f"""
   <link name="{name}">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <mass value="0.0"/>
-      <inertia 
-        ixx="0.0" ixy="0.0" ixz="0.0"
-        iyy="0.0" iyz="0.0"
-        izz="0.0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
     </inertial>
     <visual>
-      <geometry>
-        <mesh filename="{name}.stl" scale="1 1 1"/>
-      </geometry>
+      <geometry><mesh filename="{name}.stl" scale="1 1 1"/></geometry>
     </visual>
-  </link>'''
+  </link>"""
 
-    def joint_block(name, parent, child, xyz, rpy="0 0 0"):
-        # choose type/axis
-        jtype, axis, has_limit = movable.get(name, ("fixed", (0,0,0), False))
-        axis_str = " ".join(map(str,axis))
-        limit_str = ''
-        if has_limit:
-            limit_str = '    <limit effort="1" lower="-1.57" upper="1.57" velocity="1"/>\n'
-        return f'''
+    def joint_block_xyz(name: str,
+                        parent: str,
+                        child: str,
+                        xyz: tuple[float, float, float],
+                        rpy: str = "0 0 0") -> str:
+        jtype, axis, lim = movable.get(name, ("floating", (0, 0, 0), False))
+        limit_str = ('    <limit effort="1" lower="-1.57" upper="1.57" velocity="1"/>\n'
+                     if lim else '')
+        axis_str  = " ".join(map(str, axis))
+        x, y, z   = xyz
+        return f"""
   <joint name="{name}" type="{jtype}">
     <parent link="{parent}"/>
     <child  link="{child}"/>
-    <origin xyz="{' '.join(map(str,xyz))}" rpy="{rpy}"/>
+    <origin xyz="{x:.6f} {y:.6f} {z:.6f}" rpy="{rpy}"/>
     <axis  xyz="{axis_str}"/>
-{limit_str}  </joint>'''
+{limit_str}  </joint>"""
 
-    # compute all the transforms exactly as before
-    tb2m = (0, 0, measurements["h3"])
-    tm2t = (0, 0, measurements["h2"])
-    tt2n = (0, 0, measurements["h1"] + measurements["a8"])
-    n2h   = (0, 0, 0)
+    dz = lambda child, parent: float(heights[child] - heights[parent])
 
-    # arms
-    tm2uaL = (0, -(measurements["a2"]+measurements["r1"]), measurements["h2"]+measurements["h1"]-measurements["h8"])
-    ua2faL = (0,0,-measurements["h10"])
-    fa2hL  = (0,0,-measurements["h9"]*2)
+    # 3. shoulder placement -------------------------------------
+    # vertical
+    shoulder_Z  = float(heights['UpperTrunkHC'] + measurements['h1'] / 2)
+    upperArm_Z  = float(heights['UpperArmHC'])
 
-    tm2uaR = (0,  (measurements["a2"]+measurements["r1"]), measurements["h2"]+measurements["h1"]-measurements["h8"])
-    ua2faR = (0,0,-measurements["h10"])
-    fa2hR  = (0,0,-measurements["h9"]*2)
+        # ── 3. shoulder offset (add +h1/2) ──────────────────────────────
+    shoulder_dz = (-measurements["h8"]/2+measurements["h2"]/2 + measurements["h1"])       # centre of torso-top mesh
+                
+                
+                #- measurements["h1"] / 2 + measurements["h8"]/2)       # ← add ½ · h1
+    
+    HipW = measurements["hipW"]
 
-    # legs
-    tb2ulL = (0, -(measurements["hb"]/2-measurements["r1thigh"]), -measurements["h4"])
-    ul2llL = (0,0,-measurements["h6"])
-    ll2fL  = ((measurements["h7"]/2)-measurements["r2shank"], 0, -2*measurements["a5"])
+    Hip_hor = HipW-0.085*measurements["trochanterion-lateralmalleolusheight"]
 
-    tb2ulR = (0,  (measurements["hb"]/2-measurements["r1thigh"]), -measurements["h4"])
-    ul2llR = (0,0,-measurements["h6"])
-    ll2fR  = ((measurements["h7"]/2)-measurements["r2shank"], 0, -2*measurements["a5"])
+    MidLeg = HipW - measurements["r1thigh"]
+    
+    leg_dz = MidLeg
 
-    # start building
+    foot_off = measurements["h7"]/2 - measurements["r2shank"]
+    
+    
+    #- heights["UpperArmHC"]  + measurements["h1"] / 2      # ← add ½ · h1
+            # ≈ −h8/2
+
+    # lateral (half torso width + a little clearance)
+    shoulder_side = float(measurements['a1'] + measurements['r1'] * 0.05)
+
+    # 4. build URDF ---------------------------------------------
     urdf = '<?xml version="1.0"?>\n<robot name="simple_human">\n'
 
-    # all links
-    for ln in ["torso_bottom","torso_mid","torso_top","neck","head",
-               "upper_arm_left","forearm_left","hand_left",
-               "upper_arm_right","forearm_right","hand_right",
-               "upper_leg_left","lower_leg_left","foot_left",
-               "upper_leg_right","lower_leg_right","foot_right"]:
+    links = [
+        "torso_bottom", "torso_mid", "torso_top", "neck", "head",
+        "upper_arm_left", "forearm_left", "hand_left",
+        "upper_arm_right", "forearm_right", "hand_right",
+        "upper_leg_left", "lower_leg_left", "foot_left",
+        "upper_leg_right", "lower_leg_right", "foot_right",
+    ]
+    for ln in links:
         urdf += link_block(ln)
 
-    # core joints
-    urdf += joint_block("torso_bottom_to_mid","torso_bottom","torso_mid",tb2m)
-    urdf += joint_block("torso_mid_to_top","torso_mid","torso_top",tm2t)
-    urdf += joint_block("torso_top_to_neck","torso_top","neck",tt2n)
-    urdf += joint_block("neck_to_head","neck","head",n2h)
+    # torso / neck / head
+    urdf += joint_block_xyz("torso_bottom_to_mid",
+                            "torso_bottom", "torso_mid",
+                            (0, 0, dz("MiddleTrunkHC", "LowerTrunkHC")),
+                            rpy="0 0 0")
+    
+    urdf += joint_block_xyz("torso_mid_to_top",
+                            "torso_mid", "torso_top",
+                            (0, 0, dz("UpperTrunkHC", "MiddleTrunkHC")),
+                            rpy="0 0 0")
+    
+    urdf += joint_block_xyz("torso_top_to_neck",
+                            "torso_top", "neck",
+                            (0, 0, dz("NeckC", "UpperTrunkHC")),
+                            rpy="0 0 0")
 
-    # left arm
-    urdf += joint_block("torso_mid_to_upper_arm_left","torso_mid","upper_arm_left",tm2uaL, rpy="0 0 1.57")
-    urdf += joint_block("upper_arm_left_to_forearm","upper_arm_left","forearm_left",ua2faL)
-    urdf += joint_block("forearm_to_hand","forearm_left","hand_left",fa2hL)
+    neck_to_head_dz = float(measurements['a8'] / 2 + measurements['a7'])
+    urdf += joint_block_xyz("neck_to_head",
+                            "neck", "head",
+                            (0, 0, neck_to_head_dz),
+                            rpy="0 0 0")
 
-    # right arm
-    urdf += joint_block("torso_mid_to_upper_arm_right","torso_mid","upper_arm_right",tm2uaR, rpy="0 0 -1.57")
-    urdf += joint_block("upper_arm_right_to_forearm","upper_arm_right","forearm_right",ua2faR)
-    urdf += joint_block("forearm_to_hand_right","forearm_right","hand_right",fa2hR)
+    # arms
+    urdf += joint_block_xyz("torso_mid_to_upper_arm_left",
+                            "torso_mid", "upper_arm_left",
+                            ( shoulder_side, 0, shoulder_dz),
+                            rpy="0 0 1.57")
+    
+    urdf += joint_block_xyz("upper_arm_left_to_forearm",
+                            "upper_arm_left", "forearm_left",
+                            (0, 0, dz("LowerArmHC", "UpperArmHC")),
+                            rpy="0 0 0")
+    
+    urdf += joint_block_xyz("forearm_to_hand",
+                            "forearm_left", "hand_left",
+                            (0, 0, dz("HandHC", "LowerArmHC")),
+                            rpy="0 0 1.57"                  # ← 90 ° roll around X-axis
+                            )
 
-    # left leg
-    urdf += joint_block("torso_bottom_to_upper_leg_left","torso_bottom","upper_leg_left",tb2ulL)
-    urdf += joint_block("upper_leg_left_to_lower_leg","upper_leg_left","lower_leg_left",ul2llL)
-    urdf += joint_block("lower_leg_left_to_foot","lower_leg_left","foot_left",ll2fL, rpy="0 0 1.57")
+    urdf += joint_block_xyz("torso_mid_to_upper_arm_right",
+                            "torso_mid", "upper_arm_right",
+                            (-shoulder_side, 0, shoulder_dz),
+                            rpy="0 0 -1.57")
+    
+    urdf += joint_block_xyz("upper_arm_right_to_forearm",
+                            "upper_arm_right", "forearm_right",
+                            (0, 0, dz("LowerArmHC", "UpperArmHC")),
+                            rpy="0 0 0")
 
-    # right leg
-    urdf += joint_block("torso_bottom_to_upper_leg_right","torso_bottom","upper_leg_right",tb2ulR)
-    urdf += joint_block("upper_leg_right_to_lower_leg","upper_leg_right","lower_leg_right",ul2llR)
-    urdf += joint_block("lower_leg_right_to_foot","lower_leg_right","foot_right",ll2fR, rpy="0 0 1.57")
+    urdf += joint_block_xyz("forearm_to_hand_right",
+                            "forearm_right", "hand_right",
+                            (0, 0, dz("HandHC", "LowerArmHC")),
+                            rpy="0 0 1.57"         )
+
+    # legs
+    urdf += joint_block_xyz("torso_bottom_to_upper_leg_left",
+                            "torso_bottom", "upper_leg_left",
+                            (MidLeg, 0, dz("UpperLegHC", "LowerTrunkHC")),
+                            rpy="0 0 0")
+    
+
+
+    urdf += joint_block_xyz("upper_leg_left_to_lower_leg",
+                            "upper_leg_left", "lower_leg_left",
+                            (0, 0, dz("LowerLegHC", "UpperLegHC")),
+                            rpy="0 0 0")
+    
+    urdf += joint_block_xyz("lower_leg_left_to_foot",
+                            "lower_leg_left", "foot_left",
+                            (0, -foot_off, dz("FootHC", "LowerLegHC")),
+                            rpy="0 0 -1.57")
+
+    urdf += joint_block_xyz("torso_bottom_to_upper_leg_right",
+                            "torso_bottom", "upper_leg_right",
+                            (-MidLeg, 0, dz("UpperLegHC", "LowerTrunkHC")),
+                            rpy="0 0 0")
+    
+
+    urdf += joint_block_xyz("upper_leg_right_to_lower_leg",
+                            "upper_leg_right", "lower_leg_right",
+                            (0, 0, dz("LowerLegHC", "UpperLegHC")),
+                            rpy="0 0 0")
+    
+    urdf += joint_block_xyz("lower_leg_right_to_foot",
+                            "lower_leg_right", "foot_right",
+                            (0, -foot_off, dz("FootHC", "LowerLegHC")),
+                            rpy="0 0 1.57" )
 
     urdf += '\n</robot>'
 
-    # save next to your mesh folder
-    script_dir  = os.path.dirname(os.path.abspath(__file__))
-    output_dir  = os.path.join(script_dir, "model_output")
-    os.makedirs(output_dir, exist_ok=True)
-    urdf_path   = os.path.join(output_dir, "simple_human.urdf")
-    with open(urdf_path, "w") as f:
+    # 5. write ---------------------------------------------------
+    out_dir = os.path.join(os.path.dirname(__file__), "model_output")
+    os.makedirs(out_dir, exist_ok=True)
+    with open(os.path.join(out_dir, "simple_human.urdf"), "w") as f:
         f.write(urdf)
 
-    print(f"✅ URDF file successfully generated at: {urdf_path}")
+    print("✅ URDF written") #done final 89
+
+# ---------------------------------------------------------------------
+#  massurdf_module.py   –  ABSOLUTE-CENTRE VERSION, 3-DOF AT EVERY JOINT
+# ---------------------------------------------------------------------
+
+
+# # ------------------------------------------------------------------
+# # massurdf_module.py : create_urdf  – «ball»-joint version
+# # ------------------------------------------------------------------
+# def create_urdf(Ansur, inputheight):
+
+#     # ─── 1. measurements & heights ──────────────────────────────
+#     if "a1" not in Ansur.columns:          # raw ANSUR row
+#         meas      = get_measurements(Ansur, inputheight).iloc[0]
+#         heightsDF = get_heights(Ansur, inputheight)
+#     else:                                  # already processed row
+#         meas      = Ansur.iloc[0]
+#         heightsDF = get_heights(Ansur, inputheight)
+
+#     h = heightsDF.iloc[0]                  # -> Series for easy access
+#     dz = lambda c,p: float(h[c]-h[p])      # vertical delta helper
+
+#     # ─── 2. generic helpers  ────────────────────────────────────
+#     def link_block(name:str, mesh=True)->str:
+#         geo = f'<mesh filename="{name}.stl" scale="1 1 1"/>' if mesh else ''
+#         return f"""
+#   <link name="{name}">
+#     <inertial><origin xyz="0 0 0" rpy="0 0 0"/>
+#       <mass value="0"/><inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+#     </inertial>
+#     <visual><geometry>{geo}</geometry></visual>
+#   </link>"""
+
+#     def one_axis_joint(jname,parent,child,xyz,axis):
+#         ax = " ".join(map(str,axis))
+#         x,y,z = xyz
+#         return f"""
+#   <joint name="{jname}" type="continuous">
+#     <parent link="{parent}"/><child link="{child}"/>
+#     <origin xyz="{x:.6f} {y:.6f} {z:.6f}" rpy="0 0 0"/>
+#     <axis xyz="{ax}"/>
+#   </joint>"""
+
+#     def ball_joint(base_name,parent,child,xyz):
+#         """
+#         Emit:  parent ─ yaw (Z) ─> shim_yaw ─ pitch (Y) ─> shim_pitch ─ roll (X) ─> child
+#         """
+#         shim1 = f"{base_name}_shim_yaw"
+#         shim2 = f"{base_name}_shim_pitch"
+#         parts =  link_block(shim1, mesh=False) + link_block(shim2, mesh=False)
+
+#         parts += one_axis_joint(f"{base_name}_yaw",   parent, shim1, xyz, (0,0,1))
+#         parts += one_axis_joint(f"{base_name}_pitch", shim1,  shim2,  (0,0,0), (0,1,0))
+#         parts += one_axis_joint(f"{base_name}_roll",  shim2,  child,  (0,0,0), (1,0,0))
+#         return parts
+
+#     # lateral shoulder / hip offsets identical to your last working version
+#     shoulder_side = float(meas['a1'] + meas['r1']*0.05)
+#     shoulder_z    = -meas['h1']/2 + meas['h8']/2          # same vertical offset you derived
+#     hip_side      = float(meas['hipW'] - meas['r1thigh']) # Mid-leg offset you used
+#     foot_fwd      =  meas['h7']/2 - meas['r2shank']       # same foot forward shift
+
+#     # ─── 3. start URDF text ────────────────────────────────────
+#     urdf = ['<?xml version="1.0"?>', '<robot name="simple_human">']
+
+#     # 3-a  All real geometry links
+#     for ln in ["torso_bottom","torso_mid","torso_top","neck","head",
+#                "upper_arm_left","forearm_left","hand_left",
+#                "upper_arm_right","forearm_right","hand_right",
+#                "upper_leg_left","lower_leg_left","foot_left",
+#                "upper_leg_right","lower_leg_right","foot_right"]:
+#         urdf.append(link_block(ln))
+
+#     # ─── 4. joints (each replaced by a roll-pitch-yaw stack) ───
+#     add = urdf.append                           # small alias
+
+#     # torso / neck / head chain
+#     add( ball_joint("torso_bottom_to_mid",
+#          "torso_bottom","torso_mid", (0,0, dz("MiddleTrunkHC","LowerTrunkHC"))) )
+
+#     add( ball_joint("torso_mid_to_top",
+#          "torso_mid","torso_top",   (0,0, dz("UpperTrunkHC","MiddleTrunkHC"))) )
+
+#     add( ball_joint("torso_top_to_neck",
+#          "torso_top","neck",        (0,0, dz("NeckC","UpperTrunkHC"))) )
+
+#     neck2head = float(meas['a8']/2 + meas['a7'])          # flush head/neck
+#     add( ball_joint("neck_to_head",
+#          "neck","head",             (0,0, neck2head)) )
+
+#     # ── arms ───────────────────────────────────────────────────
+#     add( ball_joint("torso_mid_to_upper_arm_left",
+#          "torso_mid","upper_arm_left", ( shoulder_side,0, shoulder_z)) )
+
+#     add( ball_joint("upper_arm_left_to_forearm",
+#          "upper_arm_left","forearm_left", (0,0, dz("LowerArmHC","UpperArmHC"))) )
+
+#     add( ball_joint("forearm_to_hand",
+#          "forearm_left","hand_left", (0,0, dz("HandHC","LowerArmHC"))) )
+
+#     add( ball_joint("torso_mid_to_upper_arm_right",
+#          "torso_mid","upper_arm_right", (-shoulder_side,0, shoulder_z)) )
+
+#     add( ball_joint("upper_arm_right_to_forearm",
+#          "upper_arm_right","forearm_right",(0,0, dz("LowerArmHC","UpperArmHC"))) )
+
+#     add( ball_joint("forearm_to_hand_right",
+#          "forearm_right","hand_right",(0,0, dz("HandHC","LowerArmHC"))) )
+
+#     # ── legs ───────────────────────────────────────────────────
+#     add( ball_joint("torso_bottom_to_upper_leg_left",
+#          "torso_bottom","upper_leg_left", ( hip_side,0, dz("UpperLegHC","LowerTrunkHC"))) )
+
+#     add( ball_joint("upper_leg_left_to_lower_leg",
+#          "upper_leg_left","lower_leg_left",(0,0, dz("LowerLegHC","UpperLegHC"))) )
+
+#     add( ball_joint("lower_leg_left_to_foot",
+#          "lower_leg_left","foot_left", (0,-foot_fwd, dz("FootHC","LowerLegHC"))) )
+
+#     add( ball_joint("torso_bottom_to_upper_leg_right",
+#          "torso_bottom","upper_leg_right", (-hip_side,0, dz("UpperLegHC","LowerTrunkHC"))) )
+
+#     add( ball_joint("upper_leg_right_to_lower_leg",
+#          "upper_leg_right","lower_leg_right",(0,0, dz("LowerLegHC","UpperLegHC"))) )
+
+#     add( ball_joint("lower_leg_right_to_foot",
+#          "lower_leg_right","foot_right",(0,-foot_fwd, dz("FootHC","LowerLegHC"))) )
+
+#     # ─── 5. finish & save ──────────────────────────────────────
+#     urdf.append('</robot>')
+#     out = '\n'.join(urdf)
+
+#     out_dir = os.path.join(os.path.dirname(__file__), "model_output")
+#     os.makedirs(out_dir, exist_ok=True)
+#     with open(os.path.join(out_dir, "simple_human.urdf"), "w") as f: f.write(out)
+
+#     print("✅ URDF written – each interface now behaves like a 3-axis ball joint") 
+
+
+
 

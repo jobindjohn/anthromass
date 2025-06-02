@@ -4,14 +4,19 @@
 __all__ = ['main']
 
 # %% ../../nbs/600_mass.ipynb 3
-from .measurements_heights_module import *
+from .com_calculation_module import*
 from .com_calculation_module import *
 from .volume_calculation_module import *
 from .plot_body_module import *
 from .massclauser_module import *
+from .measurements_heights_module import get_measurements, get_heights
+
 
 # %% ../../nbs/600_mass.ipynb 4
-def main(Ansur, inputweight, inputheight):
+def main(Ansur, inputweight, inputheight, gender):
+    
+    
+    import pandas as pd
     # Define the Ansur data array
     #Ansur = [10027, 266, 1467, 337, 222, 1347, 253, 202, 401, 369, 274, 493, 71, 319, 291, 142,
     #         979, 240, 882, 619, 509, 373, 1535, 291, 1074, 259, 1292, 877, 607, 351, 36, 71, 19,
@@ -24,8 +29,12 @@ def main(Ansur, inputweight, inputheight):
     measurements = get_measurements(Ansur, inputheight)
     heights = get_heights(Ansur, inputheight)
     volumes = get_volumes(Ansur, inputheight)
-    com = get_com(Ansur, inputheight)
+    pointsJC, com = get_joint_and_com_points(Ansur, inputheight, gender)
     weights = clauser(Ansur.iloc[0], inputweight, inputheight)
+    weightsZat = zatsiorsky(inputweight, inputheight)
+
+
+    
 
 
 
@@ -52,39 +61,145 @@ def main(Ansur, inputweight, inputheight):
 
 
     # Print results from volume estimation
+
+
     
     print("RESULTS:")
-    print("Total Estimated Weight (kg) (only with Volume model using 1000kg/m3):", volumes["vTOT"] * 1000)
-    print("Total Estimated Weight (kg) using regression model",weights['mTOT'] )
-    print("Actual Weight (kg):", inputweight)
+
+    #print("Actual Weight (kg):", inputweight)
     # Actual height is given in the Ansur list (index 75) in meters
     actual_height = inputheight
     print("Estimated Height (m):", heights["TotalH"])
     # or another computed value
     print("Actual Height (m):", actual_height/1000)
 
+    print("Total Estimated Weight (kg) using Clauser regression model",weights['mTOT'] )
+    print("Total Estimated Weight (kg) using Zatriosky regression model",weightsZat['mTOTzat'] )
 
 
-    # Print results from regression model
-    """""
-    print('############################')
-    print(f"Weight actual: {results['Weight_actual']:.2f} Kg")
-    print(f"Weight estimated: {results['Weight_estimated']:.2f} Kg")
-    
-    print(f"Hand mass: {results['Hand_mass']:.2f} Kg")
-    print(f"Forearm mass: {results['Forearm_mass']:.2f} Kg")
-    print(f"Upperarm mass: {results['Upperarm_mass']:.2f} Kg")
-    print(f"Foot mass: {results['Foot_mass']:.2f} Kg")
-    print(f"Shank mass: {results['Shank_mass']:.2f} Kg")
-    print(f"Thigh mass: {results['Thigh_mass']:.2f} Kg")
-    print(f"Head mass: {results['Head_mass']:.2f} Kg")
-    print(f"Trunk mass: {results['Trunk_mass']:.2f} Kg")
 
-    print(f"diff %: {results['diff_percent']:.2f}")
-    print(f"diff kg: {results['diff_kg']:.2f}")
-    """
+    segments = [
+        'Head', 'Upper Trunk', 'Middle Trunk', 'Lower Trunk', 'Upper Arm',
+        'Lower Arm', 'Hand', 'Thigh', 'Shank', 'Foot'
+    ]
+
+    # Updated coordinate frame:
+    # X = Width (set to 0 as placeholder), Y = Depth (from original x), Z = Height (from original y)
+    positions_df = pd.DataFrame(index=['X', 'Y', 'Z'], columns=segments)
+
+    positions_df.loc[:, 'Head'] = [0, round(com['HeMC'][0], 3), round(com['HeMC'][1], 3)]
+    positions_df.loc[:, 'Upper Trunk'] = [0, round(com['UTMC'][0], 3), round(com['UTMC'][1], 3)]
+    positions_df.loc[:, 'Middle Trunk'] = [0, round(com['MTMC'][0], 3), round(com['MTMC'][1], 3)]
+    positions_df.loc[:, 'Lower Trunk'] = [0, round(com['LTMC'][0], 3), round(com['LTMC'][1], 3)]
+
+    positions_df.loc[:, 'Upper Arm'] = [0, round(com['RUAMC'][0], 3), round(com['RUAMC'][1], 3)]
+    positions_df.loc[:, 'Lower Arm'] = [0, round(com['RLAMC'][0], 3), round(com['RLAMC'][1], 3)]
+    positions_df.loc[:, 'Hand'] = [0, round(com['RHMC'][0], 3), round(com['RHMC'][1], 3)]
+    positions_df.loc[:, 'Thigh'] = [0, round(com['RTHMC'][0], 3), round(com['RTHMC'][1], 3)]
+    positions_df.loc[:, 'Shank'] = [0, round(com['RSHMC'][0], 3), round(com['RSHMC'][1], 3)]
+    positions_df.loc[:, 'Foot'] = [0, round(com['RFMC'][0], 3), round(com['RFMC'][1], 3)]
+
+    print("\nPositions of Body Segments (Custom Cartesian Mapping)\n")
+    print(positions_df.to_string())
+
+    # Keep only the joint names without the "Right" prefix
+    joints = ["Shoulder", "Elbow", "Wrist", "Hip", "Knee", "Ankle"]
+
+    # Create the DataFrame
+    jc_positions_df = pd.DataFrame(index=['X', 'Y', 'Z'], columns=joints)
+
+    # Fill the table with absolute Y values (Depth)
+    for joint in joints:
+        coords = pointsJC[joint]
+        y_depth = round(abs(coords[0]), 3)   # take absolute value of Y (depth)
+        z_height = round(coords[1], 3)
+        jc_positions_df.loc[:, joint] = [0, y_depth, z_height]
+
+    # Display the table
+    print("\nJoint Center Positions\n")
+    print(jc_positions_df.to_string())
+
+
+    print("...................")
+
+    # Mass segments with full trunk detail
+    mass_segments = [
+        "Head", "Trunk Total", "Upper Trunk", "Middle Trunk", "Lower Trunk",
+        "Upper Arm", "Forearm", "Hand", "Thigh", "Shank", "Foot"
+    ]
+
+    # Create mass comparison table
+    mass_df = pd.DataFrame(index=["Clauser", "Zatsiorsky"], columns=mass_segments)
+
+    # --- Clauser Values ---
+    mass_df.loc["Clauser", "Head"] = round(weights["mHe"], 3)
+    mass_df.loc["Clauser", "Trunk Total"] = round(weights["mTr"], 3)
+    mass_df.loc["Clauser", "Upper Trunk"] = "---"
+    mass_df.loc["Clauser", "Middle Trunk"] = "---"
+    mass_df.loc["Clauser", "Lower Trunk"] = "---"
+    mass_df.loc["Clauser", "Upper Arm"] = round(weights["mUA"], 3)
+    mass_df.loc["Clauser", "Forearm"] = round(weights["mLA"], 3)
+    mass_df.loc["Clauser", "Hand"] = round(weights["mH"], 3)
+    mass_df.loc["Clauser", "Thigh"] = round(weights["mTh"], 3)
+    mass_df.loc["Clauser", "Shank"] = round(weights["mS"], 3)
+    mass_df.loc["Clauser", "Foot"] = round(weights["mF"], 3)
+
+    # --- Zatsiorsky Values ---
+    trunk_total_zat = (
+        weightsZat["mUppTrzat"] +
+        weightsZat["mMidTrzat"] +
+        weightsZat["mLowTrzat"]
+    )
+
+    mass_df.loc["Zatsiorsky", "Head"] = round(weightsZat["mHezat"], 3)
+    mass_df.loc["Zatsiorsky", "Trunk Total"] = round(trunk_total_zat, 3)
+    mass_df.loc["Zatsiorsky", "Upper Trunk"] = round(weightsZat["mUppTrzat"], 3)
+    mass_df.loc["Zatsiorsky", "Middle Trunk"] = round(weightsZat["mMidTrzat"], 3)
+    mass_df.loc["Zatsiorsky", "Lower Trunk"] = round(weightsZat["mLowTrzat"], 3)
+    mass_df.loc["Zatsiorsky", "Upper Arm"] = round(weightsZat["mUAzat"], 3)
+    mass_df.loc["Zatsiorsky", "Forearm"] = round(weightsZat["mLAzat"], 3)
+    mass_df.loc["Zatsiorsky", "Hand"] = round(weightsZat["mHzat"], 3)
+    mass_df.loc["Zatsiorsky", "Thigh"] = round(weightsZat["mThzat"], 3)
+    mass_df.loc["Zatsiorsky", "Shank"] = round(weightsZat["mSzat"], 3)
+    mass_df.loc["Zatsiorsky", "Foot"] = round(weightsZat["mFzat"], 3)
+
+    # --- Display the table ---
+    print("\nSegment Mass Comparison (kg) — Detailed Trunk View\n")
+    print(mass_df.to_string())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     # Draw the plot
-    plot_body(Ansur, inputheight)
+    plot_body(Ansur, inputheight, gender)
+
+    
 
     
     
