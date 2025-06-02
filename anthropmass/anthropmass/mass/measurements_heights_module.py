@@ -21,11 +21,12 @@ def get_measurements(Ansur, inputheight):
     # Middle trunk
     measurements["h2"] = (Ansur['chestheight'] - Ansur['waistheightomphalion']) / 1000  # D5
     measurements["a2"] = (Ansur['chestbreadth'] + Ansur["interscyeii"]) / 4000
+
     measurements["b2"] = Ansur['chestdepth'] / 2000
     measurements["a3"] = Ansur['waistbreadth'] / 2000
     measurements["b3"] = Ansur['waistdepth'] / 2000
 
-    # Lower trunk
+    # Lower trunk 
     measurements["a4"] = Ansur['waistbreadth'] / 2000
     measurements["b4"] = Ansur['waistdepth'] / 2000
     measurements["h3"] = (Ansur['waistheightomphalion'] - Ansur['trochanterionheight']) / 1000  # D22

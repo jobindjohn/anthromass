@@ -8,6 +8,7 @@ from .com_calculation_module import*
 from .com_calculation_module import *
 from .volume_calculation_module import *
 from .plot_body_module import *
+from .inertial_calc_module import *
 from .massclauser_module import *
 from .measurements_heights_module import get_measurements, get_heights
 
@@ -32,7 +33,7 @@ def main(Ansur, inputweight, inputheight, gender):
     pointsJC, com = get_joint_and_com_points(Ansur, inputheight, gender)
     weights = clauser(Ansur.iloc[0], inputweight, inputheight)
     weightsZat = zatsiorsky(inputweight, inputheight)
-
+    inertia = calculate_inertia(Ansur, inputweight, inputheight)
 
     
 
@@ -170,11 +171,26 @@ def main(Ansur, inputweight, inputheight, gender):
 
 
 
+#INERTIA:
 
 
 
 
+    print(f"{'Upper Trunk':<12} {inertia['Ixx_UT']:>12.4f} {inertia['Iyy_UT']:>12.4f} {inertia['Izz_UT']:>12.4f}")
+    print(f"{'Middle Trunk':<12} {inertia['Ixx_MT']:>12.4f} {inertia['Iyy_MT']:>12.4f} {inertia['Izz_MT']:>12.4f}")
+    print(f"{'Lower Trunk':<12} {inertia['Ixx_LT']:>12.4f} {inertia['Iyy_LT']:>12.4f} {inertia['Izz_LT']:>12.4f}")
 
+    print(f"{'Thigh':<12} {inertia['Ixx_T']:>12.4f} {inertia['Iyy_T']:>12.4f} {inertia['Izz_T']:>12.4f}")
+    print(f"{'Shank':<12} {inertia['Ixx_S']:>12.4f} {inertia['Iyy_S']:>12.4f} {inertia['Izz_S']:>12.4f}")
+    print(f"{'Foot':<12} {inertia['Ixx_F']:>12.4f} {inertia['Iyy_F']:>12.4f} {inertia['Izz_F']:>12.4f}")
+
+    print(f"{'Upper Arm':<12} {inertia['Ixx_UA']:>12.4f} {inertia['Iyy_UA']:>12.4f} {inertia['Izz_UA']:>12.4f}")
+    print(f"{'Lower Arm':<12} {inertia['Ixx_LA']:>12.4f} {inertia['Iyy_LA']:>12.4f} {inertia['Izz_LA']:>12.4f}")
+    print(f"{'Hand':<12} {inertia['Ixx_Ha']:>12.4f} {inertia['Iyy_Ha']:>12.4f} {inertia['Izz_Ha']:>12.4f}")
+    print(f"{'Head':<12} {inertia['Ixx_H']:>12.4f} {inertia['Iyy_H']:>12.4f} {inertia['Izz_H']:>12.4f}")
+
+
+    print(inertia)
 
 
 
