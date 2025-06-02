@@ -3,21 +3,21 @@
 # %% auto 0
 __all__ = ['get_pickled_model', 'predict_from_model', 'predict_column', 'loop_measurements']
 
-# %% ../nbs/200_anthropometry.ipynb 2
+# %% ../nbs/200_anthropometry.ipynb 3
 import pickle
 import pandas as pd 
 from .data_module import *
 from .anthro_module import *
 from .bambi_module import *
 
-# %% ../nbs/200_anthropometry.ipynb 4
+# %% ../nbs/200_anthropometry.ipynb 5
 def get_pickled_model(kindofmodel:str, measurement:str):
     filepath = f'../output/anthro_models/{kindofmodel}/pickle_{measurement}_{kindofmodel}'
     with open(filepath,'rb') as file:
         model=pickle.load(file)
     return model
 
-# %% ../nbs/200_anthropometry.ipynb 6
+# %% ../nbs/200_anthropometry.ipynb 7
 def predict_from_model(pickledmodel, kindofmodel:str, measurement:str, input_person:pd.DataFrame, c=False):
     person = minus_mean(input_person,['weightkg','stature'])
     if kindofmodel=='xgboost':
@@ -44,7 +44,7 @@ def predict_from_model(pickledmodel, kindofmodel:str, measurement:str, input_per
     else:
         return 'wrong model name'
 
-# %% ../nbs/200_anthropometry.ipynb 8
+# %% ../nbs/200_anthropometry.ipynb 9
 def predict_column(kindofmodel:str, measurement:str, group:pd.DataFrame, c=False):
     pickledmodel = get_pickled_model(kindofmodel, measurement)
     preds = predict_from_model(
@@ -55,7 +55,7 @@ def predict_column(kindofmodel:str, measurement:str, group:pd.DataFrame, c=False
 
     return preds
 
-# %% ../nbs/200_anthropometry.ipynb 10
+# %% ../nbs/200_anthropometry.ipynb 11
 def loop_measurements(kindofmodel:str, measurements:list, group:pd.DataFrame, c=False):
     preds_all=pd.DataFrame()
     for m in measurements:
