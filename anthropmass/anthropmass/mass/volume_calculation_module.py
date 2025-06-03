@@ -7,21 +7,28 @@ __all__ = ['get_volumes']
 import numpy as np
 from .measurements_heights_module import *
 
-# %% ../../nbs/620_mass_volume_calc.ipynb 3
+# %% ../../nbs/620_mass_volume_calc.ipynb 4
 def get_volumes(Ansur, inputheight):
-    """
-    Computes the volumes for each body segment and the total volume.
-    """
+
+    #Computes the volumes for each body segment and the total volume.
+
     m = get_measurements(Ansur, inputheight)
     m=m.iloc[0]
+
+
+
     # Upper trunk volume
     vUT = np.pi * m["a1"] * m["b1"] * m["h1"]
     
     # Middle trunk volume (elliptical conical)
     vMT = (np.pi * m["h2"] / 3) * (m["a2"] * m["b2"] + m["a3"] * m["b3"] +
                                      np.sqrt(m["a2"] * m["b2"] * m["a3"] * m["b3"]))
+    
+
     # Lower trunk volume (cylindrical approximation using both a4 and b4)
     vLT = np.pi * m["a4"] * m["b4"] * m["h3"]
+
+
     # Thigh volume
     r1thigh = m["r1thigh"]
     r2thigh = m["r2thigh"]

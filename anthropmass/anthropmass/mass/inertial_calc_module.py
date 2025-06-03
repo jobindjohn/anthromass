@@ -14,9 +14,9 @@ from .massclauser_module import *
 def calculate_inertia(Ansur, inputweight, inputheight):
     
     # volumes, mass, and measurements
-    volumes = get_volumes(pd.DataFrame([Ansur]), inputheight)
-    mass = clauser(Ansur, inputweight, inputheight)
-    measurements = get_measurements(pd.DataFrame([Ansur]), inputheight).iloc[0]
+    volumes = get_volumes(Ansur, inputheight)
+    mass = clauser(Ansur.iloc[0], inputweight, inputheight)
+    measurements = get_measurements(Ansur, inputheight).iloc[0]
 
     # Mass of each segment
     mH = mass["mH"]
@@ -28,10 +28,14 @@ def calculate_inertia(Ansur, inputweight, inputheight):
     mHe = mass["mHe"]
     mTr = mass["mTr"]
 
+  
+
     # Volume of each trunk segment
     vUT = volumes["vUT"]
     vMT = volumes["vMT"]
     vLT = volumes["vLT"]
+
+
 
     # Measurements of the segments
     a1, b1, h1 = measurements["a1"], measurements["b1"], measurements["h1"]
@@ -152,4 +156,4 @@ def calculate_inertia(Ansur, inputweight, inputheight):
     inertia["Iyy_F"] = (1/4) * mF *(A3_aaa_F/A1_F) + mF * h7**2 *(A2_F/A1_F) - mF *(h7 * A2_F/A1_F)**2
     inertia["Izz_F"] = (1/4) * mF *(A3_aabb_F/A1_F) + mF * h7**2 *(A2_F/A1_F) - mF *(h7 * A2_F/A1_F)**2
 
-    return inertia
+    return inertia #test

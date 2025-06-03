@@ -11,14 +11,14 @@ import numpy as np
 from .measurements_heights_module import *
 
 
-# %% ../../nbs/630_mass_com_calc.ipynb 3
+# %% ../../nbs/630_mass_com_calc.ipynb 4
 def get_joint_and_com_points(Ansur, inputheight, gender):
     m = get_measurements(Ansur, inputheight).iloc[0]
     heights = get_heights(Ansur, inputheight).iloc[0]
     
 
 
-           # Extract variables needed for COM calculations
+    #Extract dimensions needed for COM calculations (only for ease of use)
     a1 = m["a1"]
     h1 = m["h1"]
     h2 = m["h2"]
@@ -47,6 +47,14 @@ def get_joint_and_com_points(Ansur, inputheight, gender):
     h9 = m["h9"]
     total_height = heights["TotalH"]
 
+
+
+
+
+    #Uses (sligthly) coefficinets depending on gender for joint placement
+
+    #Coefficients multiplied with with specific legnth to derive offset  (Based of de leva)
+    #Offsets only for vertical direction
     if gender == 1:
         # Calculate offsets
         ShoulderOFF = m["ShoulderJC"] * (-0.10117)
@@ -63,12 +71,18 @@ def get_joint_and_com_points(Ansur, inputheight, gender):
         KneeOFF     = m["KneeJC"]     * (0.00739)
         AnkleOFF    = m["AnkleJC"]    * (-0.03199)
 
-    ShoulderW = m["acromialW"]
+
+
+
+    ShoulderW = m["acromialW"] #Shoulder joints assumed to be at acromialbreadth
     HipW = m["hipW"]
-    Hip_hor = HipW - 0.085 * m["trochanterion-lateralmalleolusheight"]
-    r1thigh = m["r1thigh"]
+    Hip_hor = HipW - 0.085 * m["trochanterion-lateralmalleolusheight"] #Special case of Hip offset in horisontal direction
     MidLeg = HipW - r1thigh
 
+
+
+
+    #Calculates each joint position with its accompaning offset
     pointsJC = {
         "Right Shoulder": [ ShoulderW,  m["ShoulderH"] + ShoulderOFF],
         "Shoulder":       [-ShoulderW,  m["ShoulderH"] + ShoulderOFF],
@@ -89,9 +103,14 @@ def get_joint_and_com_points(Ansur, inputheight, gender):
 
 
 
+    #Calcualtes COM, based on formuals in report. 
+    #Defines Position locally (bottom edge at y = 0) (Not actually used)
+    #Defines Position in 2D gobally, for (y, z)
+    #In some cases height in z direction is calculated first (ends with "z")
+
     # Upper trunk COM
-    UTMCL = [0, h1 / 2]
-    UTMC = [0, (h1 / 2 + h2 + h3 + h4 + h6 + a5 * 2)]
+    UTMCL = [0, h1 / 2] #Local
+    UTMC = [0, (h1 / 2 + h2 + h3 + h4 + h6 + a5 * 2)] #Global
 
     # Head COM
     HeMCL = [0, a7]
@@ -164,7 +183,7 @@ def get_joint_and_com_points(Ansur, inputheight, gender):
 
 
     # Left Foot COM
-    LFMCx = m["h7"] - (m["h7"] * (3 * m["a6"]**2 + 2 * m["a6"] * a5 + a5**2)) / (4 * (m["a6"]**2 + m["a6"] * a5 + a5**2))
+    LFMCx = m["h7"] - (m["h7"] * (3 * m["a6"]**2 + 2 * m["a6"] * a5 + a5**2)) / (4 * (m["a6"]**2 + m["a6"] * a5 + a5**2))    #Special case since foot is oriandted in a diffrent way
     LFMCL = [LFMCx, a5]
     LFMC = [-MidLeg, a5]
 
@@ -192,7 +211,7 @@ def get_joint_and_com_points(Ansur, inputheight, gender):
         "LLAMCL": LLAMCL, "LLAMC": LLAMC,
         "RLAMCL": RLAMCL, "RLAMC": RLAMC,
         "LFMCL": LFMCL, "LFMC": LFMC,
-        "RFMCL": RFMCL, "RFMC": RFMC,
+        "RFMCL": RFMCL, "RFMC": RFMC, "RFMCx": RFMCx,
         "LHMCL": LHMCL, "LHMC": LHMC,
         "RHMCL": RHMCL, "RHMC": RHMC,
         "NMCL": NMCL, "NMC": NMC
@@ -200,31 +219,6 @@ def get_joint_and_com_points(Ansur, inputheight, gender):
 
 
 
-
-
-
-
-
-    # COM points
-    # pointsCOM = {
-    #     "Upper Trunk":   com["UTMC"],
-    #     "Middle Trunk":  com["MTMC"],
-    #     "Lower Trunk":   com["LTMC"],
-    #     "Head":          com["HeMC"],
-    #     "Left Thigh":    com["LTHMC"],
-    #     "Thigh":         com["RTHMC"],
-    #     "Left Shank":    com["LSHMC"],
-    #     "Shank":         com["RSHMC"],
-    #     "Left Upper Arm":com["LUAMC"],
-    #     "Upper Arm":     com["RUAMC"],
-    #     "Left Lower Arm":com["LLAMC"],
-    #     "Lower Arm":     com["RLAMC"],
-    #     "Left Foot":     com["LFMC"],
-    #     "Foot":          com["RFMC"],
-    #     "Left Hand":     com["LHMC"],
-    #     "Hand":          com["RHMC"],
-    #     "Neck":          com["NMC"]
-    # }
 
     return pointsJC, com
 

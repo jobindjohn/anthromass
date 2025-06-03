@@ -20,15 +20,10 @@ from .measurements_heights_module import *
 #from measurements_heightsC import get_measurements
 
 
-# %% ../../nbs/650_mass_generate_meshes.ipynb 3
+# %% ../../nbs/650_mass_generate_meshes.ipynb 4
 # === HELPERS ===
-# ---------------------------------------------------------------------
-# 650_mass_generate_meshes.py   —  DROP-IN REPLACEMENT FOR THE FUNCTION
-# ---------------------------------------------------------------------
+#Creates special shaped
 
-
-
-# ── helpers (unchanged) ───────────────────────────────────────────────
 def create_truncated_cone(radius_top, radius_bottom, height, sections=32):
     angles  = np.linspace(0, 2*np.pi, sections, endpoint=False)
     top     = np.c_[radius_top*np.cos(angles),
@@ -89,6 +84,8 @@ def center_mesh(mesh):
 # ──────────────────────────────────────────────────────────────────────
 
 
+
+#Generates all the meshes:
 def generate_all_meshes(Ansur, inputheight):
     """
     Build every body-segment mesh **centred at the origin**.
@@ -166,7 +163,7 @@ def generate_all_meshes(Ansur, inputheight):
 
 
 
-# %% ../../nbs/650_mass_generate_meshes.ipynb 4
+# %% ../../nbs/650_mass_generate_meshes.ipynb 6
 # === FUNCTION: Preview Scene ===
 def preview_current_colored_geometry(Ansur, inputheight):
     measurements = get_measurements(Ansur, inputheight).iloc[0]
