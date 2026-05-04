@@ -1,4 +1,3 @@
-# bsp_estimation
+# BSP Estimation
 
-elinor
-sanna
+Start with file `1000_final_result.ipynb` in the folder `anthropmass/nbs`
