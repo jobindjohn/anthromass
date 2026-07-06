@@ -1,3 +1,30 @@
 [build-system]
-requires = ["setuptools>=64.0"]
+requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "anthropmass"
+dynamic = ["version"]
+description = "anthromass nbdev 2"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "Apache-2.0"}
+authors = [{name = "Sanna", email = "lingsten@chalmers.se"}]
+keywords = ['nbdev', 'jupyter', 'notebook', 'python']
+classifiers = ["Natural Language :: English", "Intended Audience :: Developers", "Development Status :: 3 - Alpha", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only"]
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/sannasann/anthropmass"
+Documentation = "https://sannasann.github.io/anthropmass"
+
+[project.entry-points.nbdev]
+anthropmass = "anthropmass._modidx:d"
+
+[tool.setuptools.dynamic]
+version = {attr = "anthropmass.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["anthropmass"]
+
+[tool.nbdev]
